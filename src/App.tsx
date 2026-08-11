@@ -53,7 +53,7 @@ import {
   StaticGovernmentError,
   type StaticGovernmentProvider
 } from './providers/staticGovernment'
-import { readAppSettings, updateAppSettings } from './storage/appSettings'
+import { readAppSettings, updateAppSettings, type AppSettings } from './storage/appSettings'
 import {
   clearAllAppData,
   deleteResourceCache,
@@ -242,7 +242,16 @@ function PreviewDashboard() {
         <div className="location-layout">
           <div className="location-pin"><PinMark /></div>
           <div>
-            <p className="location-name">東京都千代田区 丸の内一丁目</p>
+            <div className="location-name-row">
+              <p className="location-name">東京都千代田区 丸の内一丁目</p>
+              <a
+                className="location-map-link map-action-button"
+                href="https://www.google.com/maps/search/?api=1&query=35.681236,139.767125"
+                target="_blank"
+                rel="noreferrer"
+                aria-label="現在地を地図で開く"
+              ><AppIcon name="map" />地図で開く</a>
+            </div>
             <p className="location-facts">
               <span>精度の目安 ±18m</span>
               <span>標高 約10m（概算）</span>
@@ -253,7 +262,13 @@ function PreviewDashboard() {
 
       <DashboardCard id="weather" title="天気" icon={<AppIcon name="sun" />}>
         <div className="weather-grid">
-          <div className="weather-main"><AppIcon name="partly-cloudy" className="weather-state-icon" /><strong>24.6℃</strong></div>
+          <div className="weather-main">
+            <AppIcon name="partly-cloudy" className="weather-state-icon" />
+            <div className="weather-current-copy">
+              <strong aria-label="現在気温 24.6℃"><span>24.6</span><span className="temperature-unit">℃</span></strong>
+              <p className="weather-condition">晴れ</p>
+            </div>
+          </div>
           <dl className="weather-details">
             <div><dt>体感</dt><dd>25.1℃</dd></div>
             <div><dt>最高</dt><dd className="warm">27℃</dd></div>
@@ -279,7 +294,7 @@ function PreviewDashboard() {
         </div>
         <div className="support-line tide-note">
           <p className="meta-line">約12km先の海洋モデル</p>
-          <p className="danger-line">航海・防災には使用不可</p>
+          <p className="danger-line">航海・防災には使用不可です</p>
         </div>
       </DashboardCard>
 
@@ -289,11 +304,10 @@ function PreviewDashboard() {
             <p><strong>東京駅</strong> <span className="meta-inline">約200m 北東</span></p>
             <p className="tags"><span>JR</span><span>東京メトロ</span><span className="plain-tag">複数路線</span></p>
           </div>
-          <button type="button" className="primary-button"><AppIcon name="map" />地図で開く</button>
+          <button type="button" className="primary-button map-action-button"><AppIcon name="map" />地図で開く</button>
         </div>
-        <div className="support-line station-note">
+        <div className="station-note">
           <details className="inline-details"><summary>ほかの駅を見る</summary></details>
-          <p className="meta-line">直線距離・所要時間ではありません</p>
         </div>
       </DashboardCard>
 
@@ -311,6 +325,7 @@ function PreviewDashboard() {
           <p className="danger-line">緊急時は119</p>
         </div>
       </DashboardCard>
+      <p className="dashboard-distance-note">表示距離はすべて現在地からの直線距離です</p>
     </main>
   )
 }
@@ -457,20 +472,26 @@ function LiveDashboard({
           <div className="location-layout">
             <div className="location-pin"><PinMark /></div>
             <div>
-              <p className="location-name">
-                {placeState.status === 'success'
-                  ? placeState.data.displayName
-                  : placeState.status === 'loading'
-                    ? '地名を確認中…'
-                    : '現在地を確認しました'}
-              </p>
+              <div className="location-name-row">
+                <p className="location-name">
+                  {placeState.status === 'success'
+                    ? placeState.data.displayName
+                    : placeState.status === 'loading'
+                      ? '地名を確認中…'
+                      : '現在地を確認しました'}
+                </p>
+                <a
+                  className="location-map-link map-action-button"
+                  href={`https://www.google.com/maps/search/?api=1&query=${locationState.fix.latitude},${locationState.fix.longitude}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label="現在地を地図で開く"
+                ><AppIcon name="map" />地図で開く</a>
+              </div>
               <p className="location-facts">
                 <span>精度の目安 ±{Math.round(locationState.fix.accuracyMeters)}m</span>
                 {weather?.elevationMeters !== undefined && <span>標高 約{weather.elevationMeters}m（概算）</span>}
                 {locationState.source === 'cached' && <span className="data-source-note">前回の位置</span>}
-                {placeState.status === 'success' && placeState.source !== 'live' && (
-                  <span className="data-source-note">{placeState.source === 'stale' ? '前回値' : '保存済み'}</span>
-                )}
               </p>
               {placeState.status === 'error' && (
                 <div className="inline-card-error" role="status">
@@ -509,7 +530,10 @@ function LiveDashboard({
             <div className="weather-grid">
               <div className="weather-main">
                 <AppIcon name={weather.weatherCode <= 1 ? 'sun' : 'partly-cloudy'} className="weather-state-icon" />
-                <div><strong>{weather.temperatureC.toFixed(1)}℃</strong><p className="weather-condition">{weather.weatherLabel}</p></div>
+                <div className="weather-current-copy">
+                  <strong aria-label={`現在気温 ${weather.temperatureC.toFixed(1)}℃`}><span>{weather.temperatureC.toFixed(1)}</span><span className="temperature-unit">℃</span></strong>
+                  <p className="weather-condition">{weather.weatherLabel}</p>
+                </div>
               </div>
               <dl className="weather-details">
                 <div><dt>体感</dt><dd>{weather.apparentTemperatureC.toFixed(1)}℃</dd></div>
@@ -518,11 +542,6 @@ function LiveDashboard({
                 <div><dt>降水</dt><dd>{Math.round(weather.precipitationProbabilityMax)}%</dd></div>
               </dl>
             </div>
-            {weatherState.status === 'success' && weatherState.source !== 'live' && (
-              <p className="data-source-note weather-source-note">
-                {weatherState.source === 'stale' ? '通信できないため前回値を表示' : '15分以内の保存済み情報'}
-              </p>
-            )}
             {weather.nextSixHours.length > 0 && (
               <details className="card-details">
                 <summary>この先6時間</summary>
@@ -579,11 +598,8 @@ function LiveDashboard({
             </div>
             <div className="support-line tide-note">
               <p className="meta-line">{formatApproximateDistance(tideState.data.summary.distanceMeters)}先の海洋モデル</p>
-              <p className="danger-line">航海・防災には使用不可</p>
+              <p className="danger-line">航海・防災には使用不可です</p>
             </div>
-            {tideState.source !== 'live' && (
-              <p className="data-source-note weather-source-note">{tideState.source === 'stale' ? '通信できないため前回値を表示' : '15分以内の保存済み情報'}</p>
-            )}
           </>
         ) : tideState.status === 'success' ? (
           <div className="pending-card"><span>近くに対象の海洋格子がないため表示しません</span></div>
@@ -612,25 +628,21 @@ function LiveDashboard({
                 </p>
               </div>
               <a
-                className="primary-button"
+                className="primary-button map-action-button"
                 href={`https://www.google.com/maps/search/?api=1&query=${stationState.data.stations[0].coordinates.latitude},${stationState.data.stations[0].coordinates.longitude}`}
                 target="_blank"
                 rel="noreferrer"
               ><AppIcon name="map" />地図で開く</a>
             </div>
-            <div className="support-line station-note">
-              {stationState.data.stations.length > 1 ? (
+            {stationState.data.stations.length > 1 && (
+              <div className="station-note">
                 <details className="inline-details station-candidates">
                   <summary>ほかの駅を見る</summary>
                   {stationState.data.stations.slice(1).map((station) => (
                     <p key={station.id}><strong>{station.name}駅</strong> {formatApproximateDistance(station.distanceMeters)} {station.direction8}</p>
                   ))}
                 </details>
-              ) : <span />}
-              <p className="meta-line">直線距離・所要時間ではありません</p>
-            </div>
-            {stationState.source !== 'live' && (
-              <p className="data-source-note weather-source-note">{stationState.source === 'stale' ? '通信できないため前回値を表示' : '15分以内の保存済み情報'}</p>
+              </div>
             )}
           </>
         ) : stationState.status === 'success' ? (
@@ -657,10 +669,6 @@ function LiveDashboard({
                 <summary>市役所も見る</summary>
                 <GovernmentOfficeRow office={governmentState.data.parentCityOffice} label="指定都市" />
               </details>
-            )}
-            <p className="data-source-note">距離は現在地から庁舎までの直線距離です</p>
-            {governmentState.source !== 'live' && (
-              <p className="data-source-note weather-source-note">{governmentState.source === 'stale' ? '通信できないため前回値を表示' : '15分以内の保存済み情報'}</p>
             )}
           </>
         ) : (
@@ -697,13 +705,10 @@ function LiveDashboard({
               <MedicalFacilityList facilities={medicalState.data.midwiferyCenters} />
             </details>
             <div className="support-line medical-note">
-              <p className="meta-line">半径{medicalState.data.searchRadiusKm}km・受診前に公式情報を確認</p>
+              <p className="meta-line">半径{medicalState.data.searchRadiusKm}km・受診前に公式情報を確認して下さい</p>
               <p className="danger-line">緊急時は119</p>
             </div>
             {medicalState.data.partialData && <p className="data-source-note">周辺データの一部を取得できませんでした</p>}
-            {medicalState.source !== 'live' && (
-              <p className="data-source-note weather-source-note">{medicalState.source === 'stale' ? '通信できないため前回値を表示' : '15分以内の保存済み情報'}</p>
-            )}
             <p className="medical-source-link"><a href="https://www.iryou.teikyouseido.mhlw.go.jp/znk-web/juminkanja/S2300/initialize" target="_blank" rel="noreferrer">医療情報ネットで確認</a></p>
           </>
         ) : (
@@ -716,6 +721,7 @@ function LiveDashboard({
           />
         )}
       </DashboardCard>
+      <p className="dashboard-distance-note">表示距離はすべて現在地からの直線距離です</p>
     </main>
   )
 }
@@ -773,6 +779,7 @@ export function App({
   const [shareSelection, setShareSelection] = useState<ShareSelection>(defaultShareSelection)
   const [shareFallback, setShareFallback] = useState<'idle' | 'manual'>('idle')
   const [pwaUpdateState, setPwaUpdateState] = useState<'idle' | 'available' | 'loading'>('idle')
+  const [themeMode, setThemeMode] = useState<AppSettings['theme']>(() => readAppSettings().theme)
   const [toast, setToast] = useState<string>()
   const requestVersion = useRef(0)
   const latestFix = useRef<LocationFix | undefined>(undefined)
@@ -788,6 +795,30 @@ export function App({
       window.removeEventListener('imakoko:pwa-offline-ready', handleOfflineReady)
     }
   }, [])
+
+  useEffect(() => {
+    const mediaQuery = typeof window.matchMedia === 'function'
+      ? window.matchMedia('(prefers-color-scheme: dark)')
+      : undefined
+    const applyTheme = () => {
+      const resolvedTheme = themeMode === 'system'
+        ? mediaQuery?.matches ? 'dark' : 'light'
+        : themeMode
+      document.documentElement.dataset.theme = themeMode
+      document.documentElement.dataset.colorMode = resolvedTheme
+      document.documentElement.style.colorScheme = resolvedTheme
+    }
+
+    applyTheme()
+    if (themeMode !== 'system') return
+    mediaQuery?.addEventListener('change', applyTheme)
+    return () => mediaQuery?.removeEventListener('change', applyTheme)
+  }, [themeMode])
+
+  const changeThemeMode = (theme: AppSettings['theme']) => {
+    setThemeMode(theme)
+    updateAppSettings({ theme })
+  }
 
   const fetchPlace = useCallback(async (fix: LocationFix, version: number, forceRefresh = false) => {
     setPlaceState({ status: 'loading' })
@@ -1227,6 +1258,7 @@ export function App({
       setStationState({ status: 'idle' })
       setGovernmentState({ status: 'idle' })
       setMedicalState({ status: 'idle' })
+      setThemeMode('system')
       setOpenPanel(null)
       setClearStatus('idle')
       setToast('保存データを消去しました')
@@ -1237,11 +1269,13 @@ export function App({
 
   const isIntro = locationState.status === 'intro'
   const isPreview = locationState.status === 'preview'
-  const updatedAt = locationState.status === 'success'
-    ? formatJstDateTime(new Date(locationState.fix.capturedAt)).timeLabel
-    : isPreview
-      ? dateTime.timeLabel
-      : '--:--'
+  const dashboardSources = [placeState, weatherState, tideState, stationState, governmentState, medicalState]
+    .flatMap((state) => state.status === 'success' ? [state.source] : [])
+  const dashboardSourceNotice = dashboardSources.includes('stale')
+    ? '一部に通信できないため前回値を表示しています'
+    : dashboardSources.includes('cached')
+      ? '一部に15分以内の保存済み情報を表示しています'
+      : undefined
   const checkedDateTime = locationState.status === 'success'
     ? formatJstDateTime(new Date(locationState.fix.capturedAt))
     : undefined
@@ -1313,34 +1347,49 @@ export function App({
     <div className="app-shell">
       <header className="app-header">
         <div className="brand-block">
-          <PinMark />
-          <div>
+          <img className="brand-icon" src="/favicon.svg" alt="" />
+          <div className="brand-copy">
             <h1>いまここインフォ</h1>
+            <p className="brand-slug">imacoco-info</p>
             <p className="copyright">© 2026 SIKUMI LAB</p>
           </div>
         </div>
-        {!isIntro && <div className="header-actions" aria-label="画面操作">
-          <button
-            type="button"
-            className="header-button"
-            aria-label="現在地の情報を更新"
-            onClick={isPreview ? undefined : () => void requestLocation(true)}
-            disabled={locationState.status === 'loading'}
-          >
-            <AppIcon name="refresh" className="header-action-icon" />
-            更新
-          </button>
-          <button
-            type="button"
-            className="header-button"
-            aria-label="表示内容を共有"
-            onClick={() => { setShareFallback('idle'); setOpenPanel('share') }}
-          >
-            <AppIcon name="share" className="header-action-icon" />
-            共有
-          </button>
-          <p className="updated-at">更新 {updatedAt}</p>
-        </div>}
+        <div className="header-tools">
+          {!isIntro && <div className="header-actions" aria-label="画面操作">
+            <button
+              type="button"
+              className="header-button"
+              aria-label="現在地の情報を更新"
+              onClick={isPreview ? undefined : () => void requestLocation(true)}
+              disabled={locationState.status === 'loading'}
+            >
+              <AppIcon name="refresh" className="header-action-icon" />
+              更新
+            </button>
+            <button
+              type="button"
+              className="header-button"
+              aria-label="表示内容を共有"
+              onClick={() => { setShareFallback('idle'); setOpenPanel('share') }}
+            >
+              <AppIcon name="share" className="header-action-icon" />
+              共有
+            </button>
+          </div>}
+          <div className="header-meta">
+            <label className="theme-picker">
+              <select
+                aria-label="表示色モード"
+                value={themeMode}
+                onChange={(event) => changeThemeMode(event.target.value as AppSettings['theme'])}
+              >
+                <option value="light">ライト</option>
+                <option value="dark">ダーク</option>
+                <option value="system">自動</option>
+              </select>
+            </label>
+          </div>
+        </div>
       </header>
 
       {pwaUpdateState !== 'idle' && (
@@ -1405,7 +1454,10 @@ export function App({
       <footer className="app-footer">
         <button type="button" onClick={() => setOpenPanel('info')}><span className="footer-label"><AppIcon name="shield" />出典・プライバシー</span><AppIcon name="chevron" /></button>
         <button type="button" onClick={() => { setClearStatus('idle'); setOpenPanel('delete') }}><span className="footer-label"><AppIcon name="trash" />保存データを消去</span><AppIcon name="chevron" /></button>
-        <small>{APP_DISPLAY_VERSION}</small>
+        <div className="footer-meta">
+          {dashboardSourceNotice && <span className="footer-source-note"><AppIcon name="clock" />{dashboardSourceNotice}</span>}
+          <small>{APP_DISPLAY_VERSION}</small>
+        </div>
       </footer>
 
       {openPanel && (

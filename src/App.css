@@ -7,9 +7,15 @@
   --sunset-coral: #b33b13;
   --station-blue: #2b63ad;
   --health-green: #087a5d;
+  --interactive-link: #075f9f;
+  --info-note: #176785;
+  --primary-action-bg: #082f67;
+  --primary-action-fg: #ffffff;
+  --row-surface: rgba(255, 255, 255, 0.58);
   --icon-cloud-fill: #f7fbfd;
   --icon-cloud-stroke: #8ca3b6;
   --line: #d8e6ef;
+  --header-control-border: #cbdde8;
   --surface: rgba(255, 255, 255, 0.93);
   --danger: #ff3429;
   --shadow: 0 2px 8px rgba(24, 83, 112, 0.1);
@@ -19,14 +25,18 @@ button {
   color: inherit;
 }
 
+a {
+  color: var(--interactive-link);
+}
+
 .app-shell {
   width: min(100%, 920px);
   min-height: 100vh;
   margin: 0 auto;
   padding: clamp(18px, 4vw, 40px);
   background:
-    radial-gradient(circle at 22% 0%, rgba(83, 210, 230, 0.18), transparent 28%),
-    linear-gradient(180deg, #effbff 0, #f8fcff 25%, #eef8fc 100%);
+    radial-gradient(circle at 22% 0%, rgba(55, 139, 157, 0.11), transparent 28%),
+    linear-gradient(180deg, #d7e5e9 0, #e2eaec 25%, #d6e3e7 100%);
 }
 
 .app-header {
@@ -39,8 +49,20 @@ button {
 
 .brand-block {
   display: flex;
-  align-items: center;
-  gap: 14px;
+  align-items: flex-start;
+  gap: 12px;
+  padding-top: 4px;
+}
+
+.brand-icon {
+  width: 54px;
+  height: 54px;
+  flex: 0 0 54px;
+  border-radius: 11px;
+}
+
+.brand-copy {
+  min-width: 0;
 }
 
 .pin-mark {
@@ -56,15 +78,39 @@ button {
 .brand-block h1 {
   margin: 0;
   color: var(--navy);
-  font-size: clamp(1.55rem, 5vw, 2.25rem);
+  font-size: clamp(1.3rem, 4vw, 1.85rem);
   font-weight: 700;
+  font-synthesis: weight;
+  line-height: 1;
   letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.brand-slug {
+  margin: 5px 0 0;
+  color: var(--interactive-link);
+  font-size: 0.76rem;
+  letter-spacing: 0.18em;
 }
 
 .copyright {
-  margin: 8px 0 0;
+  margin: 3px 0 0;
   color: var(--muted);
-  font-size: 0.92rem;
+  font-size: 0.78rem;
+}
+
+.header-tools {
+  display: grid;
+  gap: 3px;
+  justify-items: end;
+}
+
+.header-meta {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0;
 }
 
 .header-actions {
@@ -75,9 +121,14 @@ button {
 }
 
 .header-button {
-  min-height: 58px;
-  padding: 6px;
-  border: 1px solid #cbdde8;
+  display: inline-flex;
+  height: 42px;
+  min-height: 42px;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 4px 7px;
+  border: 1px solid var(--header-control-border);
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.82);
   color: var(--navy);
@@ -124,18 +175,30 @@ button {
 }
 
 .header-action-icon {
-  width: 27px;
-  height: 27px;
-  margin: 0 auto 3px;
-  color: var(--blue);
+  width: 21px;
+  height: 21px;
+  margin: 0;
+  color: var(--interactive-link);
 }
 
-.updated-at {
-  grid-column: 1 / -1;
-  margin: 0;
+.theme-picker {
+  display: inline-flex;
+  width: 100%;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.theme-picker select {
+  width: 100%;
+  min-height: 30px;
+  padding: 3px 24px 3px 8px;
+  border: 1px solid var(--header-control-border);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.82);
   color: var(--navy);
-  font-size: 0.88rem;
-  white-space: nowrap;
+  cursor: pointer;
 }
 
 .date-rail {
@@ -322,11 +385,24 @@ button {
   margin-bottom: 10px;
 }
 
+.info-card:is([data-card-id='weather'], [data-card-id='solar'], [data-card-id='tide'], [data-card-id='medical']) .card-heading {
+  margin-bottom: 0;
+}
+
+.info-card[data-card-id='medical'] .card-body > .list-row:first-child {
+  margin-top: 0;
+}
+
 .card-heading h2 {
   margin: 0;
   color: var(--navy);
-  font-size: 1.25rem;
+  font-size: 1.05rem;
   font-weight: 700;
+}
+
+.location-card .card-heading h2 {
+  font-size: 1.05rem;
+  letter-spacing: normal;
 }
 
 .card-icon {
@@ -380,10 +456,40 @@ button {
 }
 
 .location-name {
-  margin: 0 0 6px;
+  margin: 0;
   color: var(--navy);
-  font-size: clamp(1.25rem, 4.5vw, 1.8rem);
+  font-size: clamp(1.05rem, 3.4vw, 1.35rem);
   font-weight: 700;
+  line-height: 1.5;
+  letter-spacing: 0.01em;
+}
+
+.location-name-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 7px;
+}
+
+.location-map-link {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 9px;
+  border: 0;
+  border-radius: 9px;
+  background: var(--primary-action-bg);
+  color: var(--primary-action-fg);
+  font-size: 0.78rem;
+  line-height: 1.2;
+  text-decoration: none;
+}
+
+.location-map-link .app-icon {
+  width: 15px;
+  height: 15px;
 }
 
 .location-facts {
@@ -421,7 +527,7 @@ button {
 }
 
 .data-source-note {
-  color: var(--blue);
+  color: var(--info-note);
   font-size: 0.82rem;
 }
 
@@ -541,39 +647,60 @@ button {
 
 .weather-main {
   display: flex;
-  align-items: center;
-  gap: 18px;
+  align-items: flex-start;
+  gap: 12px;
 }
 
 .weather-state-icon {
-  width: 76px;
-  height: 76px;
+  width: 58px;
+  height: 58px;
   color: #698299;
 }
 
 .weather-main strong {
+  display: block;
   color: var(--navy);
-  font-size: clamp(2.9rem, 9vw, 4.6rem);
+  font-size: clamp(2.25rem, 7vw, 2.5rem);
   font-weight: 700;
+  line-height: 1;
   letter-spacing: -0.04em;
+  white-space: nowrap;
+}
+
+.weather-current-copy {
+  display: flex;
+  height: 58px;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.temperature-unit {
+  margin-left: 0.06em;
+  font-size: 0.68em;
+  font-weight: 400;
+  letter-spacing: 0;
+  vertical-align: 0.08em;
 }
 
 .weather-condition {
-  margin: -4px 0 0;
+  margin: 0;
   color: var(--muted);
   font-weight: 700;
+  line-height: 1;
 }
 
 .weather-details {
   display: grid;
-  grid-template-columns: repeat(2, minmax(90px, 1fr));
-  gap: 8px 14px;
+  grid-template-columns: repeat(4, minmax(48px, 1fr));
+  gap: 8px;
   margin: 0;
 }
 
 .weather-details div {
-  display: flex;
-  gap: 8px;
+  display: grid;
+  gap: 2px;
+  justify-items: center;
+  text-align: center;
 }
 
 .weather-details dt,
@@ -623,10 +750,18 @@ button {
 }
 
 .station-note {
-  margin-top: 14px;
-  padding-top: 12px;
+  margin-top: 10px;
+  padding-top: 8px;
   border-top: 1px solid var(--line);
   color: var(--muted);
+}
+
+.dashboard-distance-note {
+  margin: -2px 4px 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.45;
+  text-align: right;
 }
 
 .inline-details summary {
@@ -689,7 +824,7 @@ button {
   padding: 5px 10px;
   border-radius: 8px;
   background: var(--card-accent);
-  color: white;
+  color: var(--primary-action-fg);
 }
 
 .tide-values span {
@@ -759,11 +894,26 @@ button {
   padding: 9px 15px;
   border: 0;
   border-radius: 9px;
-  background: var(--navy);
-  color: white;
+  background: var(--primary-action-bg);
+  color: var(--primary-action-fg);
   cursor: pointer;
   text-decoration: none;
   white-space: nowrap;
+}
+
+.map-action-button,
+.primary-button.map-action-button {
+  min-height: 29px;
+  gap: 4px;
+  padding: 6px 9px;
+  font-size: 0.78rem;
+  line-height: 1.2;
+}
+
+.primary-button.map-action-button .app-icon,
+.location-map-link.map-action-button .app-icon {
+  width: 15px;
+  height: 15px;
 }
 
 .station-candidates p {
@@ -844,7 +994,7 @@ button {
   padding: 10px 12px;
   border: 1px solid var(--line);
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.58);
+  background: var(--row-surface);
 }
 
 .government-office > div {
@@ -943,8 +1093,8 @@ button {
 }
 
 .pwa-update-banner button:last-child {
-  background: var(--navy);
-  color: white;
+  background: var(--primary-action-bg);
+  color: var(--primary-action-fg);
 }
 
 .primary-button .app-icon {
@@ -1030,8 +1180,33 @@ button {
   height: 15px;
 }
 
-.app-footer small {
+.footer-meta {
   grid-column: 1 / -1;
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.footer-source-note {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 4px;
+  color: var(--info-note);
+  font-size: clamp(0.62rem, 2.5vw, 0.72rem);
+  line-height: 1.35;
+  white-space: nowrap;
+}
+
+.footer-source-note .app-icon {
+  width: 1em;
+  height: 1em;
+}
+
+.footer-meta small {
+  flex: 0 0 auto;
   color: var(--muted);
   text-align: right;
 }
@@ -1090,7 +1265,7 @@ button {
 }
 
 .source-list a {
-  color: var(--blue);
+  color: var(--interactive-link);
 }
 
 .modal-note {
@@ -1161,15 +1336,27 @@ button {
 
   .brand-block {
     gap: 8px;
+    padding-top: 6px;
   }
 
-  .brand-block > .pin-mark {
-    width: 32px;
-    height: 42px;
+  .brand-icon {
+    width: 46px;
+    height: 46px;
+    flex-basis: 46px;
+    border-radius: 10px;
   }
 
   .copyright {
-    font-size: 0.76rem;
+    font-size: 0.68rem;
+  }
+
+  .brand-slug {
+    margin-top: 4px;
+    font-size: 0.7rem;
+  }
+
+  .brand-block h1 {
+    font-size: 1.3rem;
   }
 
   .header-actions {
@@ -1177,8 +1364,8 @@ button {
   }
 
   .header-button {
-    min-height: 52px;
-    font-size: 0.82rem;
+    min-height: 42px;
+    font-size: 0.76rem;
   }
 
   .date-rail {
@@ -1187,6 +1374,10 @@ button {
 
   .info-card {
     padding: 16px 14px;
+  }
+
+  .info-card:is([data-card-id='station'], [data-card-id='government']) {
+    padding-bottom: 14px;
   }
 
   .card-icon {
@@ -1209,7 +1400,9 @@ button {
   }
 
   .location-name {
-    font-size: 1.1rem;
+    font-size: 1.12rem;
+    line-height: 1.5;
+    letter-spacing: 0.01em;
   }
 
   .weather-grid {
@@ -1221,8 +1414,21 @@ button {
     justify-content: center;
   }
 
+  .weather-state-icon {
+    width: 54px;
+    height: 54px;
+  }
+
+  .weather-current-copy {
+    height: 54px;
+  }
+
+  .weather-main strong {
+    font-size: 2.25rem;
+  }
+
   .weather-details {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(4, minmax(48px, 1fr));
   }
 
   .station-row {
@@ -1252,9 +1458,6 @@ button {
     grid-template-columns: 1fr;
   }
 
-  .app-footer small {
-    grid-column: 1;
-  }
 }
 
 @media (max-width: 380px) {
@@ -1267,12 +1470,16 @@ button {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .header-tools {
+    width: 100%;
+  }
+
   .date-rail {
     flex-wrap: wrap;
   }
 
   .brand-block h1 {
-    font-size: 1.35rem;
+    font-size: 0.95rem;
   }
 
   .current-date,
@@ -1328,7 +1535,6 @@ button {
 
   .primary-button,
   .compact-button,
-  .updated-at,
   .inline-details summary,
   .support-line .meta-line,
   .support-line .danger-line {
@@ -1337,29 +1543,54 @@ button {
   }
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --navy: #d9f1ff;
-    --muted: #a5c2d4;
-    --line: #27475d;
-    --surface: rgba(13, 39, 57, 0.94);
-    --shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
-    --icon-cloud-fill: #d6e8f2;
-    --icon-cloud-stroke: #84a5ba;
-  }
+:root[data-color-mode='dark'] {
+  --navy: #d9f1ff;
+  --muted: #a5c2d4;
+  --line: #27475d;
+  --header-control-border: #7894a8;
+  --surface: rgba(13, 39, 57, 0.94);
+  --shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+  --icon-cloud-fill: #d6e8f2;
+  --icon-cloud-stroke: #84a5ba;
+  --interactive-link: #8cdcf4;
+  --info-note: #9be6f7;
+  --primary-action-bg: #7ed5e8;
+  --primary-action-fg: #071a2a;
+  --row-surface: rgba(15, 49, 68, 0.92);
+}
 
-  .app-shell {
-    background:
-      radial-gradient(circle at 20% 0%, rgba(18, 143, 171, 0.2), transparent 30%),
-      linear-gradient(180deg, #071a2a 0, #0a2133 100%);
-  }
+:root[data-color-mode='dark'] .info-card[data-card-id='tide'] {
+  --card-accent: #a7eff8;
+  --card-chip: rgba(167, 239, 248, 0.08);
+}
 
-  .date-rail,
-  .header-button,
-  .list-row,
-  .secondary-button {
-    background: rgba(12, 37, 54, 0.78);
-  }
+:root[data-color-mode='dark'] .info-card[data-card-id='station'],
+:root[data-color-mode='dark'] .info-card[data-card-id='government'] {
+  --card-accent: #b0d3ff;
+  --card-chip: rgba(176, 211, 255, 0.08);
+}
+
+:root[data-color-mode='dark'] .info-card[data-card-id='medical'] {
+  --card-accent: #89efcf;
+  --card-chip: rgba(137, 239, 207, 0.08);
+}
+
+:root[data-color-mode='dark'] .app-shell {
+  background:
+    radial-gradient(circle at 20% 0%, rgba(18, 143, 171, 0.2), transparent 30%),
+    linear-gradient(180deg, #071a2a 0, #0a2133 100%);
+}
+
+:root[data-color-mode='dark'] .date-rail,
+:root[data-color-mode='dark'] .header-button,
+:root[data-color-mode='dark'] .theme-picker select,
+:root[data-color-mode='dark'] .list-row,
+:root[data-color-mode='dark'] .secondary-button {
+  background: rgba(12, 37, 54, 0.78);
+}
+
+:root[data-color-mode='dark'] .government-office {
+  background: var(--row-surface);
 }
 
 @media (prefers-reduced-motion: reduce) {
