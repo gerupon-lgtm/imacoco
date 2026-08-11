@@ -19,4 +19,24 @@ describe('app settings', () => {
     clearAppSettings()
     expect(readAppSettings().onboardingAccepted).toBe(false)
   })
+
+  it('旧形式ではインストール案内を未確認として補完する', () => {
+    localStorage.setItem('imakoko-info:settings', JSON.stringify({
+      schemaVersion: 1,
+      onboardingAccepted: true,
+      expandedCards: [],
+      theme: 'system',
+      lastSeenAppVersion: '0.1.0'
+    }))
+
+    expect(readAppSettings().installPromptSeen).toBe(false)
+  })
+
+  it('インストール案内の表示済み状態を保存し全消去で解除する', () => {
+    updateAppSettings({ installPromptSeen: true })
+    expect(readAppSettings().installPromptSeen).toBe(true)
+
+    clearAppSettings()
+    expect(readAppSettings().installPromptSeen).toBe(false)
+  })
 })

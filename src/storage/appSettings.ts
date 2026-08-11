@@ -6,6 +6,7 @@ const LEGACY_INTRO_KEY = 'imacoco:intro-seen'
 const appSettingsSchema = z.object({
   schemaVersion: z.literal(1),
   onboardingAccepted: z.boolean(),
+  installPromptSeen: z.boolean().default(false),
   expandedCards: z.array(z.string()),
   theme: z.enum(['system', 'light', 'dark']),
   lastSeenAppVersion: z.string()
@@ -16,6 +17,7 @@ export type AppSettings = z.infer<typeof appSettingsSchema>
 const defaultSettings = (): AppSettings => ({
   schemaVersion: 1,
   onboardingAccepted: false,
+  installPromptSeen: false,
   expandedCards: [],
   theme: 'system',
   lastSeenAppVersion: '0.1.0'
