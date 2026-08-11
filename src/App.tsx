@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 
+import { AppIcon } from './components/AppIcon'
 import { formatJstDateTime, millisecondsUntilNextMinute } from './domain/time'
 import './App.css'
 
@@ -10,7 +11,7 @@ type AppProps = {
 type CardProps = {
   id: string
   title: string
-  icon: string
+  icon: React.ReactNode
   children: React.ReactNode
   className?: string
   headingMeta?: React.ReactNode
@@ -85,11 +86,11 @@ export function App({ initialNow }: AppProps) {
         </div>
         <div className="header-actions" aria-label="画面操作">
           <button type="button" className="header-button" aria-label="現在地の情報を更新">
-            <span aria-hidden="true">↻</span>
+            <AppIcon name="refresh" className="header-action-icon" />
             更新
           </button>
           <button type="button" className="header-button" aria-label="表示内容を共有">
-            <span aria-hidden="true">⌯</span>
+            <AppIcon name="share" className="header-action-icon" />
             共有
           </button>
           <p className="updated-at">更新 {dateTime.timeLabel}</p>
@@ -99,7 +100,7 @@ export function App({ initialNow }: AppProps) {
       <div className="date-rail" aria-label="現在の日本時間">
         <time className="current-date" dateTime={now.toISOString()}>{dateTime.dateLabel}</time>
         <time className="current-clock" dateTime={now.toISOString()}>
-          <span aria-hidden="true">◷</span> {dateTime.timeLabel}
+          <AppIcon name="clock" /> {dateTime.timeLabel}
         </time>
       </div>
 
@@ -107,7 +108,7 @@ export function App({ initialNow }: AppProps) {
         <DashboardCard
           id="location"
           title="いまここ"
-          icon="⌖"
+          icon={<AppIcon name="pin" />}
           className="location-card"
           headingMeta={<time className="location-acquired" dateTime="2026-08-11T14:31:00+09:00">取得 14:31</time>}
         >
@@ -123,9 +124,9 @@ export function App({ initialNow }: AppProps) {
           </div>
         </DashboardCard>
 
-        <DashboardCard id="weather" title="天気" icon="☀">
+        <DashboardCard id="weather" title="天気" icon={<AppIcon name="sun" />}>
           <div className="weather-grid">
-            <div className="weather-main"><span aria-hidden="true">🌤</span><strong>24.6℃</strong></div>
+            <div className="weather-main"><AppIcon name="partly-cloudy" className="weather-state-icon" /><strong>24.6℃</strong></div>
             <dl className="weather-details">
               <div><dt>体感</dt><dd>25.1℃</dd></div>
               <div><dt>最高</dt><dd className="warm">27℃</dd></div>
@@ -136,14 +137,14 @@ export function App({ initialNow }: AppProps) {
           <details className="card-details"><summary>この先6時間</summary></details>
         </DashboardCard>
 
-        <DashboardCard id="solar" title="太陽" icon="☀" className="compact-card">
+        <DashboardCard id="solar" title="太陽" icon={<AppIcon name="sun" />} className="compact-card">
           <div className="split-values">
-            <div><span>日の出</span><strong>5:02</strong></div>
-            <div><span>日の入り</span><strong>18:27</strong></div>
+            <div><span className="solar-label"><AppIcon name="sunrise" />日の出</span><strong>5:02</strong></div>
+            <div><span className="solar-label"><AppIcon name="sunset" />日の入り</span><strong>18:27</strong></div>
           </div>
         </DashboardCard>
 
-        <DashboardCard id="tide" title="潮の目安" icon="≋" className="tide-card">
+        <DashboardCard id="tide" title="潮の目安" icon={<AppIcon name="waves" />} className="tide-card">
           <span className="badge">概算</span>
           <div className="split-values tide-values">
             <div><span>干潮</span><strong>15:18</strong></div>
@@ -155,13 +156,13 @@ export function App({ initialNow }: AppProps) {
           </div>
         </DashboardCard>
 
-        <DashboardCard id="station" title="最寄り駅" icon="🚉">
+        <DashboardCard id="station" title="最寄り駅" icon={<AppIcon name="train" />}>
           <div className="station-row">
             <div>
               <p><strong>東京駅</strong> <span className="meta-inline">約200m 北東</span></p>
               <p className="tags"><span>JR</span><span>東京メトロ</span><span className="plain-tag">複数路線</span></p>
             </div>
-            <button type="button" className="primary-button">地図で開く</button>
+            <button type="button" className="primary-button"><AppIcon name="map" />地図で開く</button>
           </div>
           <div className="support-line station-note">
             <details className="inline-details"><summary>ほかの駅を見る</summary></details>
@@ -169,14 +170,14 @@ export function App({ initialNow }: AppProps) {
           </div>
         </DashboardCard>
 
-        <DashboardCard id="government" title="役所" icon="🏛">
+        <DashboardCard id="government" title="役所" icon={<AppIcon name="building" />}>
           <div className="list-row"><span><strong>東京都庁</strong>　約6.7km 西</span><span className="row-actions">公式　地図</span></div>
           <div className="list-row"><span><strong>千代田区役所</strong>　約2.5km 北</span><span className="row-actions">公式　地図</span></div>
         </DashboardCard>
 
-        <DashboardCard id="medical" title="医療機関" icon="✚">
-          <button type="button" className="list-row full-row"><span>病院　3件</span><span>›</span></button>
-          <button type="button" className="list-row full-row"><span>一般診療所　3件</span><span>›</span></button>
+        <DashboardCard id="medical" title="医療機関" icon={<AppIcon name="medical" />}>
+          <button type="button" className="list-row full-row"><span>病院　3件</span><AppIcon name="chevron" /></button>
+          <button type="button" className="list-row full-row"><span>一般診療所　3件</span><AppIcon name="chevron" /></button>
           <div className="loading-bars" aria-label="その他の医療機関を確認中"><i /><i /><i /><i /></div>
           <div className="support-line medical-note">
             <p className="meta-line">その他の医療機関を確認中…</p>
@@ -186,8 +187,8 @@ export function App({ initialNow }: AppProps) {
       </main>
 
       <footer className="app-footer">
-        <button type="button">♢ 出典・プライバシー <span>›</span></button>
-        <button type="button">▱ 保存データを消去 <span>›</span></button>
+        <button type="button"><span className="footer-label"><AppIcon name="shield" />出典・プライバシー</span><AppIcon name="chevron" /></button>
+        <button type="button"><span className="footer-label"><AppIcon name="trash" />保存データを消去</span><AppIcon name="chevron" /></button>
         <small>iki-0.1.0</small>
       </footer>
     </div>
