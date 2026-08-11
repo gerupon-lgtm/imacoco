@@ -3,6 +3,10 @@
   --muted: #526b8b;
   --sky: #13a8c2;
   --blue: #0b74b8;
+  --sun-gold: #a46500;
+  --sunset-coral: #b33b13;
+  --station-blue: #2b63ad;
+  --health-green: #087a5d;
   --line: #d8e6ef;
   --surface: rgba(255, 255, 255, 0.93);
   --danger: #ff3429;
@@ -101,7 +105,9 @@ button {
   padding: 12px 18px;
   border: 1px solid var(--line);
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.72);
+  background:
+    linear-gradient(90deg, rgba(19, 168, 194, 0.09), rgba(244, 180, 0, 0.055)),
+    rgba(255, 255, 255, 0.78);
   box-shadow: 0 1px 5px rgba(20, 82, 110, 0.06);
 }
 
@@ -120,13 +126,49 @@ button {
 }
 
 .info-card {
+  --card-accent: var(--sky);
+  --card-chip: rgba(19, 168, 194, 0.12);
+  --card-wash: rgba(19, 168, 194, 0.11);
   position: relative;
   overflow: hidden;
   padding: 18px 20px;
   border: 1px solid var(--line);
   border-radius: 17px;
-  background: var(--surface);
+  background:
+    radial-gradient(circle at 7% 0%, var(--card-wash), transparent 34%),
+    var(--surface);
   box-shadow: var(--shadow);
+}
+
+.info-card[data-card-id='weather'] {
+  --card-accent: var(--sun-gold);
+  --card-chip: rgba(244, 180, 0, 0.15);
+  --card-wash: rgba(244, 180, 0, 0.13);
+}
+
+.info-card[data-card-id='solar'] {
+  --card-accent: var(--sunset-coral);
+  --card-chip: rgba(242, 107, 56, 0.13);
+  --card-wash: rgba(242, 107, 56, 0.1);
+}
+
+.info-card[data-card-id='tide'] {
+  --card-accent: #08738a;
+  --card-chip: rgba(7, 159, 189, 0.13);
+  --card-wash: rgba(7, 159, 189, 0.11);
+}
+
+.info-card[data-card-id='station'],
+.info-card[data-card-id='government'] {
+  --card-accent: var(--station-blue);
+  --card-chip: rgba(52, 120, 212, 0.12);
+  --card-wash: rgba(52, 120, 212, 0.09);
+}
+
+.info-card[data-card-id='medical'] {
+  --card-accent: var(--health-green);
+  --card-chip: rgba(15, 159, 120, 0.13);
+  --card-wash: rgba(15, 159, 120, 0.1);
 }
 
 .card-heading {
@@ -144,9 +186,16 @@ button {
 }
 
 .card-icon {
-  display: none;
-  color: var(--sky);
-  font-size: 1.45rem;
+  display: grid;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--card-chip);
+  color: var(--card-accent);
+  font-size: 1.08rem;
+  line-height: 1;
 }
 
 .location-card .card-heading {
@@ -173,7 +222,7 @@ button {
   height: 72px;
   place-items: center;
   border-radius: 50%;
-  background: #e5f7fb;
+  background: var(--card-chip);
 }
 
 .location-pin .pin-mark {
@@ -330,12 +379,22 @@ button {
   right: 16px;
   padding: 5px 10px;
   border-radius: 8px;
-  background: var(--sky);
+  background: var(--card-accent);
   color: white;
 }
 
 .tide-values span {
-  color: var(--sky);
+  color: var(--card-accent);
+  font-weight: 700;
+}
+
+.info-card[data-card-id='solar'] .split-values > div:first-child span {
+  color: var(--sun-gold);
+  font-weight: 700;
+}
+
+.info-card[data-card-id='solar'] .split-values > div:last-child span {
+  color: var(--sunset-coral);
   font-weight: 700;
 }
 
@@ -495,7 +554,7 @@ button {
   }
 
   .card-icon {
-    display: inline;
+    display: grid;
   }
 
   .location-layout {
