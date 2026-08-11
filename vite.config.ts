@@ -1,6 +1,9 @@
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 import { defineConfig } from 'vitest/config'
+import { readFileSync } from 'node:fs'
+
+const packageVersion = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')).version as string
 
 export default defineConfig({
   plugins: [
@@ -9,6 +12,7 @@ export default defineConfig({
       registerType: 'prompt',
       includeAssets: ['favicon.svg'],
       workbox: {
+        cacheId: `imakoko-info-${packageVersion}`,
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}']
       },
       manifest: {

@@ -30,10 +30,14 @@ export type JstDateTimeLabel = {
   timeLabel: string
 }
 
-export function formatJstDateTime(instant: Date): JstDateTimeLabel {
+function assertValidInstant(instant: Date) {
   if (Number.isNaN(instant.getTime())) {
     throw new Error('有効な日時を指定してください')
   }
+}
+
+export function formatJstDateTime(instant: Date): JstDateTimeLabel {
+  assertValidInstant(instant)
 
   const dateParts = datePartsFormatter.formatToParts(instant)
   const timeParts = timePartsFormatter.formatToParts(instant)
@@ -51,10 +55,29 @@ export function formatJstDateTime(instant: Date): JstDateTimeLabel {
   }
 }
 
-export function millisecondsUntilNextMinute(instant: Date) {
-  if (Number.isNaN(instant.getTime())) {
-    throw new Error('有効な日時を指定してください')
+export function formatJstLocalDate(instant: Date) {
+  assertValidInstant(instant)
+
+  const parts = datePartsFormatter.formatToParts(instant)
+  const year = partValue(parts, 'year')
+  const month = partValue(parts, 'month').padStart(2, '0')
+  const day = partValue(parts, 'day').padStart(2, '0')
+
+  return `${year}-${month}-${day}`
+}
+
+export function unixSecondsToUtcIso(unixSeconds: number) {
+  if (!Number.isFinite(unixSeconds)) {
+    throw new Error('Unix秒は有限数で指定してください')
   }
+
+  const instant = new Date(unixSeconds * 1_000)
+  assertValidInstant(instant)
+  return instant.toISOString()
+}
+
+export function millisecondsUntilNextMinute(instant: Date) {
+  assertValidInstant(instant)
 
   return 60_000 - (instant.getSeconds() * 1_000 + instant.getMilliseconds())
 }

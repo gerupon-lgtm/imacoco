@@ -84,6 +84,11 @@ button {
   cursor: pointer;
 }
 
+.header-button:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
 .app-icon {
   display: block;
   width: 1em;
@@ -171,6 +176,97 @@ button {
 .dashboard {
   display: grid;
   gap: 12px;
+}
+
+.intro-panel {
+  display: grid;
+  justify-items: center;
+  padding: clamp(28px, 8vw, 64px) clamp(20px, 7vw, 60px);
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(19, 168, 194, 0.14), transparent 36%),
+    var(--surface);
+  box-shadow: var(--shadow);
+  text-align: center;
+}
+
+.intro-icon {
+  display: grid;
+  width: 86px;
+  height: 86px;
+  place-items: center;
+  margin-bottom: 16px;
+  border-radius: 50%;
+  background: rgba(19, 168, 194, 0.12);
+}
+
+.intro-icon .pin-mark {
+  width: 42px;
+  height: 54px;
+}
+
+.intro-kicker {
+  margin: 0 0 7px;
+  color: var(--blue);
+  font-weight: 700;
+}
+
+.intro-panel h2 {
+  max-width: 650px;
+  margin: 0;
+  color: var(--navy);
+  font-size: clamp(1.45rem, 5vw, 2rem);
+  line-height: 1.45;
+}
+
+.intro-copy {
+  max-width: 620px;
+  margin: 18px 0 0;
+  color: var(--muted);
+  line-height: 1.8;
+}
+
+.intro-list {
+  display: grid;
+  gap: 9px;
+  width: min(100%, 600px);
+  margin: 22px 0 0;
+  padding: 18px 22px 18px 42px;
+  border-radius: 13px;
+  background: rgba(19, 168, 194, 0.075);
+  color: var(--muted);
+  line-height: 1.55;
+  text-align: left;
+}
+
+.intro-actions {
+  display: grid;
+  gap: 10px;
+  width: min(100%, 360px);
+  margin-top: 24px;
+}
+
+.intro-primary,
+.secondary-button {
+  width: 100%;
+  min-height: 52px;
+  font: inherit;
+  font-weight: 700;
+}
+
+.secondary-button {
+  border: 1px solid #b8cedc;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--navy);
+  cursor: pointer;
+}
+
+.intro-privacy {
+  margin: 15px 0 0;
+  color: var(--muted);
+  font-size: 0.82rem;
 }
 
 .info-card {
@@ -299,6 +395,113 @@ button {
   font-size: 0.9rem;
 }
 
+.inline-card-error {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px 10px;
+  margin-top: 8px;
+  color: var(--danger);
+  font-size: 0.84rem;
+}
+
+.inline-card-error button {
+  padding: 3px 8px;
+  border: 1px solid currentColor;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.boundary-caution {
+  margin: 7px 0 0;
+  color: var(--sunset-coral);
+  font-size: 0.84rem;
+}
+
+.data-source-note {
+  color: var(--blue);
+  font-size: 0.82rem;
+}
+
+.weather-source-note {
+  margin: 10px 0 0;
+  text-align: right;
+}
+
+.location-status {
+  display: flex;
+  min-height: 82px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 8px 2px 2px;
+  color: var(--muted);
+}
+
+.location-status p {
+  margin: 0;
+}
+
+.location-status--loading {
+  justify-content: flex-start;
+  color: var(--navy);
+  font-weight: 700;
+}
+
+.location-status--error p {
+  color: var(--danger);
+}
+
+.status-spinner {
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+  border: 3px solid rgba(19, 168, 194, 0.2);
+  border-top-color: var(--sky);
+  border-radius: 50%;
+  animation: status-spin 0.8s linear infinite;
+}
+
+.pending-card {
+  display: flex;
+  min-height: 52px;
+  align-items: center;
+  gap: 12px;
+  color: var(--muted);
+}
+
+.pending-card .status-spinner {
+  width: 19px;
+  height: 19px;
+  flex-basis: 19px;
+}
+
+.card-error {
+  display: flex;
+  min-height: 52px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  color: var(--danger);
+}
+
+.card-error p {
+  margin: 0;
+}
+
+.compact-button {
+  width: auto;
+  min-height: 38px;
+  padding: 6px 12px;
+  white-space: nowrap;
+}
+
+@keyframes status-spin {
+  to { transform: rotate(360deg); }
+}
+
 .meta-line,
 .danger-line {
   margin: 5px 0 0;
@@ -355,6 +558,12 @@ button {
   letter-spacing: -0.04em;
 }
 
+.weather-condition {
+  margin: -4px 0 0;
+  color: var(--muted);
+  font-weight: 700;
+}
+
 .weather-details {
   display: grid;
   grid-template-columns: repeat(2, minmax(90px, 1fr));
@@ -388,6 +597,29 @@ button {
 
 .card-details summary {
   cursor: pointer;
+}
+
+.hourly-forecast {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(62px, 1fr));
+  gap: 7px;
+  margin-top: 12px;
+  overflow-x: auto;
+}
+
+.hourly-forecast > div {
+  display: grid;
+  gap: 3px;
+  padding: 8px 6px;
+  border-radius: 8px;
+  background: var(--card-chip);
+  color: var(--navy);
+  text-align: center;
+}
+
+.hourly-forecast > div span:last-child {
+  color: var(--blue);
+  font-size: 0.84rem;
 }
 
 .station-note {
@@ -530,7 +762,189 @@ button {
   background: var(--navy);
   color: white;
   cursor: pointer;
+  text-decoration: none;
   white-space: nowrap;
+}
+
+.station-candidates p {
+  margin: 7px 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.medical-category {
+  border-bottom: 1px solid var(--line);
+}
+
+.medical-category summary {
+  padding: 11px 2px;
+  color: var(--navy);
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.medical-facilities {
+  display: grid;
+  gap: 7px;
+  padding-bottom: 10px;
+}
+
+.medical-facility {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--card-chip);
+}
+
+.medical-facility > div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.medical-facility strong {
+  overflow-wrap: anywhere;
+  color: var(--navy);
+}
+
+.medical-facility > div span,
+.medical-empty {
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.medical-empty {
+  margin: 0 0 10px;
+}
+
+.medical-actions {
+  display: flex;
+  gap: 9px;
+  white-space: nowrap;
+}
+
+.medical-source-link {
+  margin: 10px 0 0;
+  text-align: right;
+}
+
+.government-offices {
+  display: grid;
+  gap: 8px;
+}
+
+.government-office {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.58);
+}
+
+.government-office > div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.government-office > div > span,
+.government-office small {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.government-office strong {
+  overflow-wrap: anywhere;
+  color: var(--navy);
+  font-size: 1.05rem;
+}
+
+.government-actions {
+  display: flex;
+  gap: 10px;
+  white-space: nowrap;
+}
+
+.government-parent .government-office {
+  margin-top: 9px;
+}
+
+.share-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 12px;
+  margin: 15px 0;
+}
+
+.share-options label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.share-options input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--navy);
+}
+
+.share-preview-label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+.share-preview {
+  width: 100%;
+  resize: vertical;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--card-chip);
+  color: var(--navy);
+  font: inherit;
+  line-height: 1.55;
+}
+
+.pwa-update-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  max-width: 960px;
+  margin: 10px auto 0;
+  padding: 10px 14px;
+  border: 1px solid #7cc4df;
+  border-radius: 10px;
+  background: #e8f8ff;
+  color: var(--navy);
+  box-shadow: 0 5px 16px rgba(26, 78, 109, 0.1);
+}
+
+.pwa-update-banner > span:last-child {
+  display: flex;
+  gap: 8px;
+}
+
+.pwa-update-banner button {
+  padding: 6px 10px;
+  border: 1px solid var(--navy);
+  border-radius: 7px;
+  background: white;
+  color: var(--navy);
+  cursor: pointer;
+}
+
+.pwa-update-banner button:last-child {
+  background: var(--navy);
+  color: white;
 }
 
 .primary-button .app-icon {
@@ -622,6 +1036,120 @@ button {
   text-align: right;
 }
 
+.modal-backdrop {
+  position: fixed;
+  z-index: 20;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(4, 22, 39, 0.58);
+}
+
+.modal-panel {
+  width: min(100%, 560px);
+  max-height: min(85vh, 720px);
+  overflow-y: auto;
+  padding: 24px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--surface);
+  box-shadow: 0 18px 55px rgba(0, 20, 38, 0.3);
+  color: var(--muted);
+}
+
+.modal-panel h2 {
+  margin: 0 0 14px;
+  color: var(--navy);
+}
+
+.modal-panel p {
+  line-height: 1.65;
+}
+
+.source-list {
+  display: grid;
+  gap: 10px;
+  margin: 18px 0;
+}
+
+.source-list div {
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--card-chip, rgba(19, 168, 194, 0.1));
+}
+
+.source-list dt {
+  color: var(--navy);
+  font-weight: 700;
+}
+
+.source-list dd {
+  margin: 4px 0 0;
+  line-height: 1.5;
+}
+
+.source-list a {
+  color: var(--blue);
+}
+
+.modal-note {
+  padding-left: 12px;
+  border-left: 3px solid var(--sunset-coral);
+}
+
+.modal-version {
+  font-size: 0.84rem;
+}
+
+.modal-close {
+  width: 100%;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.danger-button {
+  min-height: 42px;
+  padding: 8px 16px;
+  border: 0;
+  border-radius: 9px;
+  background: #c92d25;
+  color: white;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+}
+
+.danger-button:disabled,
+.modal-actions button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.toast {
+  position: fixed;
+  z-index: 30;
+  right: 20px;
+  bottom: 20px;
+  padding: 12px 17px;
+  border-radius: 10px;
+  background: var(--navy);
+  color: var(--surface);
+  box-shadow: var(--shadow);
+  animation: toast-life 4s both;
+}
+
+@keyframes toast-life {
+  0% { opacity: 0; transform: translateY(8px); }
+  8%, 88% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(8px); }
+}
+
 @media (max-width: 620px) {
   .app-shell {
     padding: 16px 12px 24px;
@@ -701,6 +1229,25 @@ button {
     align-items: flex-start;
   }
 
+  .intro-panel {
+    padding: 28px 16px;
+  }
+
+  .intro-list {
+    padding: 15px 15px 15px 35px;
+    font-size: 0.9rem;
+  }
+
+  .location-status {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .location-status--loading {
+    align-items: center;
+    flex-direction: row;
+  }
+
   .app-footer {
     grid-template-columns: 1fr;
   }
@@ -711,6 +1258,19 @@ button {
 }
 
 @media (max-width: 380px) {
+  .app-header {
+    flex-wrap: wrap;
+  }
+
+  .header-actions {
+    width: 100%;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .date-rail {
+    flex-wrap: wrap;
+  }
+
   .brand-block h1 {
     font-size: 1.35rem;
   }
@@ -718,6 +1278,11 @@ button {
   .current-date,
   .current-clock {
     font-size: 0.93rem;
+    white-space: normal;
+  }
+
+  .location-layout {
+    grid-template-columns: 1fr;
   }
 
   .location-facts {
@@ -732,6 +1297,43 @@ button {
 
   .station-row {
     display: grid;
+  }
+
+  .weather-details,
+  .split-values,
+  .share-options {
+    grid-template-columns: 1fr;
+  }
+
+  .weather-details div {
+    justify-content: space-between;
+  }
+
+  .split-values > div + div {
+    border-top: 1px solid #b7c8d6;
+    border-left: 0;
+  }
+
+  .government-office,
+  .medical-facility {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .government-actions,
+  .medical-actions {
+    flex-wrap: wrap;
+    white-space: normal;
+  }
+
+  .primary-button,
+  .compact-button,
+  .updated-at,
+  .inline-details summary,
+  .support-line .meta-line,
+  .support-line .danger-line {
+    overflow-wrap: anywhere;
+    white-space: normal;
   }
 }
 
@@ -754,7 +1356,8 @@ button {
 
   .date-rail,
   .header-button,
-  .list-row {
+  .list-row,
+  .secondary-button {
     background: rgba(12, 37, 54, 0.78);
   }
 }

@@ -1,0 +1,1 @@
+[{"id":"station-0cd267d724bb4673","name":"七戸十和田","coordinates":{"latitude":40.719931,"longitude":141.153908},"lines":[{"lineName":"東北新幹線","operatorName":"東日本旅客鉄道（旧国鉄）","operatorType":"1"}],"sourceRelationIds":["EB03_12101022"],"installedStartYear":2010,"installedEndYear":9999,"dataVersion":"2025-12-31"}]

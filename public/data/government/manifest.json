@@ -1,0 +1,26 @@
+{
+  "dataVersion": "2026-01-15",
+  "checkedAt": "2026-08-11",
+  "schemaVersion": 1,
+  "recordCount": 1960,
+  "localOfficeCount": 1913,
+  "currentMunicipalityCount": 1919,
+  "missingCurrentCodes": [
+    "1695",
+    "1696",
+    "1697",
+    "1698",
+    "1699",
+    "1700"
+  ],
+  "extraOfficeCodes": [],
+  "fallbackOfficialCount": 143,
+  "sourceUrls": [
+    "https://amano-tec.com/data/localgovernments.html",
+    "https://www.digital.go.jp/resources/data_local_governments",
+    "https://www.digital.go.jp/assets/contents/node/basic_page/field_ref_resources/2b1128e2-c699-4aa0-9206-37169a6697c8/3d2142af/20260630_resources_opendata_lg_list_02.csv",
+    "https://www.j-lis.go.jp/spd/code-address/jititai-code.html",
+    "https://www.j-lis.go.jp/spd/map-search/cms_1069.html"
+  ],
+  "redistribution": "アマノ技研データ同梱readme: フリーソフト・転載配布可"
+}

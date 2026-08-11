@@ -197,17 +197,19 @@ TIDE_NETWORK_ERROR / TIDE_TIMEOUT / TIDE_SCHEMA_ERROR / TIDE_TOO_FAR / TIDE_INSU
 
 ## 8. P-005 自治体・役所照合
 
+座標・名称はアマノ技研の全国市町村役場データ（2026-01-15）を基礎にし、自治体の公式確認先はデジタル庁の地方公共団体オープンデータ一覧とJ-LISを併用してビルド時に静的化する。実行時は外部の役所検索APIへ座標を送らない。
+
 ### 入力
 
 - PlaceSummary.municipalityCode
 - 生GPS座標
-- municipalities.json、offices.json
+- src/data/municipalities.generated.json、public/data/government/offices.json
 
 ### 処理
 
 1. 自治体コードから所属都道府県と管轄役所を得る。
 2. 都道府県庁を得る。
-3. 【想定】designated-wardなら区役所をjurisdictionOffice、親市役所をparentCityOfficeにする。
+3. designated-wardなら区役所をjurisdictionOffice、親市役所をparentCityOfficeにする。
 4. 生GPSから各庁舎までの直線距離と初期方位角を計算する。
 5. 8方位と矢印へ正規化する。
 6. 公式URLがhttpsでない、座標が日本の概略範囲外ならレコードを拒否する。
@@ -262,16 +264,16 @@ MEDICAL_MANIFEST_ERROR / MEDICAL_SHARD_MISSING / MEDICAL_SCHEMA_ERROR / MEDICAL_
 
 ### 失敗コード
 
-STATION_MANIFEST_ERROR / STATION_SHARD_MISSING / STATION_SCHEMA_ERROR / STATION_EMPTY を使う。個別シャード欠損時は取得済み範囲を表示せず、検索範囲が不完全であることを示してカード単位で再試行する。最寄り駅の誤順位を避けるため、部分データを完全な検索結果として扱わない。
+STATION_MANIFEST_ERROR / STATION_SHARD_ERROR / STATION_SCHEMA_ERROR を使う。個別シャード欠損時は取得済み範囲を表示せず、カード単位で再試行する。最寄り駅の誤順位を避けるため、部分データを完全な検索結果として扱わない。30km以内0件は例外ではなく空配列で返す。
 
 ## 11. P-007 カード調停
 
 ### タイムアウト・再試行
 
 - 外部fetchはAbortControllerで10秒タイムアウト。
-- ネットワークエラーまたは5xxだけ、500〜1000msのジッター後に1回自動再試行する。
+- ネットワークエラー、タイムアウト、または5xxだけ、直ちに1回自動再試行する。
 - 4xx、スキーマ不正、対象外は自動再試行しない。
-- カード全体は開始から20秒でCARD_TIMEOUTへ移す。
+- 10秒の試行を最大2回とし、最大20秒後はカード単位の失敗または前回値へ移す。
 - 手動再試行はそのカードだけを再取得する。
 - 手動の画面更新は15分キャッシュをバイパスするが、進行中の同一要求を重複発行しない。
 
@@ -328,9 +330,9 @@ STATION_MANIFEST_ERROR / STATION_SHARD_MISSING / STATION_SCHEMA_ERROR / STATION_
 |---|---|---|---|
 | 権限 | GEO_PERMISSION_DENIED | 位置情報が許可されていません | 設定変更後 |
 | 通信 | WEATHER_NETWORK_ERROR | 天気を取得できませんでした | 可 |
-| 時間 | CARD_TIMEOUT | 取得に時間がかかっています | 可 |
+| 時間 | WEATHER_TIMEOUT等 | 取得に時間がかかっています | 可 |
 | 形式 | MEDICAL_SCHEMA_ERROR | 医療データを読み取れませんでした | 更新後 |
-| 静的データ | STATION_SHARD_MISSING | 駅データをすべて読み込めませんでした | 可 |
+| 静的データ | STATION_SHARD_ERROR | 周辺の駅データを読み込めませんでした | 可 |
 | 対象外 | TIDE_TOO_FAR | 潮の目安の対象地域ではありません | 不要 |
 | 保存 | STORAGE_CLEAR_FAILED | 保存データをすべて消去できませんでした | 可 |
 | 共有 | SHARE_CLIPBOARD_DENIED | 自動コピーできませんでした | 手動コピー |
@@ -341,16 +343,16 @@ STATION_MANIFEST_ERROR / STATION_SHARD_MISSING / STATION_SCHEMA_ERROR / STATION_
 |---|---|---|---|---|---|
 | 更新ボタン連打 | 同一要求を共有 | ボタンを進行表示 | in-flightキーで重複抑止 | 完了後再操作 | 10連打で要求1組 |
 | API 5xx | 1回だけ再試行 | 他カードを維持 | 読み取りのみ | 前回値／手動再試行 | 2回失敗でerror |
-| 20秒超過 | Abort可能な要求を停止 | CARD_TIMEOUT | 古い応答を採用しない | 再試行 | 遅延応答が画面を上書きしない |
+| 最大2回の取得失敗 | Abort可能な要求を停止 | カード固有エラー | 古い応答を採用しない | 再試行 | 遅延応答が画面を上書きしない |
 | 医療シャード一部欠損 | 取得済みを保持 | 一部欠損表示 | 施設ID重複排除 | 再取得 | 1ファイル404でも結果表示 |
 | 駅シャード一部欠損 | 不完全結果を採用しない | 駅カードだけ失敗 | 進行中要求を共有 | カード再試行／前回値 | 1ファイル404で誤った最寄り駅を表示しない |
 | 24時間期限切れ | キャッシュ削除 | 未取得／エラー | 削除は冪等 | 新規取得 | 境界前後を時計固定で検証 |
 | PWA更新中 | 旧版を動作継続 | 更新通知 | controllerchangeを1回処理 | 新版再読込 | 二重再読込なし |
 | 全消去連打 | 既に空でも成功 | 完了通知1回 | 削除は冪等 | 未取得状態 | 2並行実行で残存0 |
 
-## 17. CSP接続先【想定】
+## 17. CSP接続先
 
-connect-srcはself、mreversegeocoder.gsi.go.jp、api.open-meteo.com、marine-api.open-meteo.comだけを許可する。画像・フォントは原則selfとdataに限定し、外部追跡資産を読み込まない。Cloudflare Pagesの具体的なヘッダー形式は実装タスクで検証する。
+connect-srcはself、mreversegeocoder.gsi.go.jp、api.open-meteo.com、marine-api.open-meteo.comだけを許可する。画像・フォントはselfとdataに限定し、外部追跡資産を読み込まない。`public/_headers`でCSP、X-Robots-Tag、Referrer-Policy、Permissions-Policy、nosniff、COOPを配信する。
 
 ## 18. 提供元検証
 

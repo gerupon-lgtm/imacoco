@@ -9,10 +9,10 @@
 | 領域 | 用途 | 内容 |
 |---|---|---|
 | メモリー | 現在の処理 | 生GPS、進行中の取得状態。再読込で消える |
-| IndexedDB | 最新1件と短期キャッシュ | LocationSnapshot、DashboardSnapshot、ResourceCacheEntry |
+| IndexedDB | 最新1件と短期キャッシュ | LocationSnapshot、ResourceCacheEntry。latest-dashboardストアは将来の互換用に予約 |
 | localStorage | 小さな設定 | AppSettings、保存形式版 |
-| Cache Storage | PWA資産 | HTML、JS、CSS、アイコン、静的データ |
-| public/data | ビルド成果物 | 自治体、役所、駅、医療、出典、データ版 |
+| Cache Storage | PWA資産 | HTML、JS、CSS、フォント、アイコン。全国JSONは容量を抑えるためprecacheしない |
+| public/data | ビルド成果物 | 役所、駅、医療、出典、データ版 |
 
 ## 3. 共通型
 
@@ -64,9 +64,9 @@ IndexedDBストア: latest-location、キー: latest
 
 新規取得時に上書きし、履歴配列へ追加しない。期限超過時は削除する。
 
-### 4.3 DashboardSnapshot
+### 4.3 DashboardSnapshot（将来予約）
 
-IndexedDBストア: latest-dashboard、キー: latest
+IndexedDBストア: latest-dashboard、キー: latest。MVPではストアだけ作成し、前回表示はLocationSnapshotと各ResourceCacheEntryから復元する。これにより集約スナップショットと個別キャッシュの二重書込み競合を避ける。
 
 | 項目 | 型 | 必須 | 説明 |
 |---|---|---|---|
@@ -169,8 +169,8 @@ TideEvent:
 | 項目 | 型 | 必須 | 説明 |
 |---|---|---|---|
 | prefecturalOffice | NearbyOffice | ○ | 都道府県庁 |
-| jurisdictionOffice | NearbyOffice | ○ | 管轄役所。区がある場合は区役所優先【想定】 |
-| parentCityOffice | NearbyOffice | - | 政令指定都市の市役所補助導線【想定】 |
+| jurisdictionOffice | NearbyOffice | ○ | 管轄役所。区がある場合は区役所優先 |
+| parentCityOffice | NearbyOffice | - | 政令指定都市の市役所補助導線 |
 | dataVersion | string | ○ | 役所マスター版 |
 
 ### 5.6 StationSummary
@@ -211,18 +211,14 @@ NearbyStation:
 
 ### 6.1 MunicipalityRecord
 
-ファイル: public/data/government/municipalities.json
+ファイル: src/data/municipalities.generated.json（国土地理院の自治体コード一覧から生成し、アプリ本体へ同梱）
 
 | 項目 | 型 | 必須 | 説明 |
 |---|---|---|---|
 | code | string | ○ | 自治体コード |
-| prefectureCode | string | ○ | 都道府県コード |
-| name | string | ○ | 団体名 |
-| type | prefecture/city/special-ward/town/village/designated-ward | ○ | 団体種別 |
-| parentCode | string | - | 指定都市区の親市コード |
-| officeId | string | ○ | 代表庁舎参照 |
-| sourceUrl | URL | ○ | J-LIS等の根拠 |
-| checkedAt | YYYY-MM-DD | ○ | 確認日 |
+| prefectureName | string | ○ | 都道府県名 |
+| municipalityName | string | ○ | 市区町村名。指定都市区では親市名 |
+| wardName | string | - | 指定都市の区名 |
 
 ### 6.2 OfficeRecord
 
@@ -242,7 +238,7 @@ NearbyStation:
 
 ### 6.3 StationGroupRecord
 
-ファイル: public/data/stations/{dataVersion}/{gridId}.json
+ファイル: public/data/stations/{gridId}.json
 
 | 項目 | 型 | 必須 | 説明 |
 |---|---|---|---|
@@ -276,7 +272,9 @@ StationLine:
 | sourceDataset | N05 | ○ | データ識別子 |
 | schemaVersion | integer | ○ | JSON形式版 |
 | gridSizeDegrees | number | ○ | 0.25 |
-| sourceRecordCount | integer | ○ | 現存扱いの原典駅レコード数 |
+| sourceFeatureCount | integer | ○ | 原典駅レコード総数 |
+| adoptedSourceRecordCount | integer | ○ | 現存扱いとして採用した原典駅レコード数 |
+| excluded | object | ○ | 終了・休止・不正による除外件数 |
 | stationGroupCount | integer | ○ | グルーピング後の駅数 |
 | generatedAt | ISO日時 | ○ | UTC |
 | sourceUrls | URL[] | ○ | 原典・個別利用条件 |
@@ -287,7 +285,7 @@ StationLine:
 
 ### 6.5 MedicalFacilityRecord
 
-ファイル: public/data/medical/{dataVersion}/{gridId}.json
+ファイル: public/data/medical/{gridId}.json
 
 | 項目 | 型 | 必須 | 説明 |
 |---|---|---|---|
@@ -313,11 +311,13 @@ StationLine:
 | schemaVersion | integer | ○ | JSON形式版 |
 | gridSizeDegrees | number | ○ | 0.25 |
 | facilityCounts | Record<type, number> | ○ | 全国件数 |
+| grids | Record<gridId, number> | ○ | 分割ファイルごとの件数 |
+| accounting | object | ○ | 原典、生成、座標欠損等の除外件数 |
 | generatedAt | ISO日時 | ○ | UTC |
 | sourceUrls | URL[] | ○ | 原典 |
 | checksum | string | ○ | 生成物集合の検査値 |
 
-検索時は30kmの外接矩形と交差する0.25度グリッドを列挙し、必要ファイルだけを取得する。取得後にHaversine距離で厳密に10km／30kmを絞り込む。
+検索時はまず10kmの外接矩形と交差する0.25度グリッドだけを取得する。病院・一般診療所のどちらかが3件未満の場合だけ30kmの外接矩形との差分ファイルを追加取得し、Haversine距離で厳密に10km／30kmを絞り込む。
 
 ## 7. 距離・方角
 
@@ -332,7 +332,7 @@ StationLine:
 |---|---|---|---|---|---|
 | 生GPS | 測位成功 | 再測位 | 即時破棄 | メモリー解放 | 不可 |
 | LocationSnapshot | 測位成功 | 最新1件で上書き | 24時間で削除 | 全消去／自動削除 | 不可 |
-| DashboardSnapshot | カード取得 | 最新1件で上書き | 前回値としても使わない | 全消去／自動削除 | 不可 |
+| DashboardSnapshot | MVPでは未使用 | - | - | 全消去 | 将来予約 |
 | ResourceCache | 取得成功 | 同種1件を上書き | 15分後stale、24時間後削除 | 全消去／自動削除 | 外部から再取得 |
 | 役所マスター | ビルド時生成 | 半年確認・変更時 | 旧版を表示し更新日を明示 | 新版確認後に置換 | Gitで前版復元 |
 | 駅マスター | 国土数値情報から生成 | 公式版更新時 | 基準日を明示して継続利用 | 新版確認後に置換 | Gitで前版復元 |
