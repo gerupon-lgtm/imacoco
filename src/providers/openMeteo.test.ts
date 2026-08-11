@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import {
   buildOpenMeteoUrl,
+  compactWeatherCodeLabel,
   normalizeApproximateElevation,
   normalizeOpenMeteoResponse,
   weatherCodeLabel
@@ -144,5 +145,14 @@ describe('Open-Meteo weather provider', () => {
     )
     expect(result.weather.elevationMeters).toBeUndefined()
     expect(result.weather.weatherLabel).toBe('天気情報')
+  })
+
+  it('時間別表示向けにWMOコードを短い天気状態へ集約する', () => {
+    expect([0, 1].map(compactWeatherCodeLabel)).toEqual(['晴れ', '晴れ'])
+    expect([2, 3, 45].map(compactWeatherCodeLabel)).toEqual(['くもり', 'くもり', 'くもり'])
+    expect([51, 61, 80].map(compactWeatherCodeLabel)).toEqual(['雨', '雨', '雨'])
+    expect([71, 85].map(compactWeatherCodeLabel)).toEqual(['雪', '雪'])
+    expect(compactWeatherCodeLabel(95)).toBe('雷雨')
+    expect(compactWeatherCodeLabel(1234)).toBe('天気')
   })
 })

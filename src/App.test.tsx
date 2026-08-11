@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -82,7 +82,7 @@ describe('現在地ダッシュボード', () => {
     expect(screen.getByText('標高 約10m（概算）')).toBeVisible()
   })
 
-  it('潮の目安より後を最寄り駅、役所、医療機関の順に並べる', () => {
+  it('住所の直後に最寄り駅を置き、残りのカードを重要度順に並べる', () => {
     render(<App initialNow={fixedNow} initialMode="preview" />)
 
     const cardHeadings = screen
@@ -91,13 +91,40 @@ describe('現在地ダッシュボード', () => {
 
     expect(cardHeadings).toEqual([
       'いまここ',
+      '最寄り駅',
       '天気',
       '太陽',
       '潮の目安',
-      '最寄り駅',
       '役所',
       '医療機関'
     ])
+  })
+
+  it('最寄り駅と次候補のそれぞれから地図を開ける', async () => {
+    const user = userEvent.setup()
+    render(<App initialNow={fixedNow} initialMode="preview" />)
+
+    const stationCard = screen.getByRole('heading', { level: 2, name: '最寄り駅' })
+      .closest('[data-card-id="station"]')
+    expect(stationCard).not.toBeNull()
+
+    await user.click(within(stationCard as HTMLElement).getByText('ほかの駅を見る'))
+
+    const mapLinks = within(stationCard as HTMLElement).getAllByRole('link', { name: /駅を地図で開く$/ })
+    expect(mapLinks).toHaveLength(3)
+    expect(mapLinks.map((link) => link.getAttribute('aria-label'))).toEqual([
+      '東京駅を地図で開く',
+      '有楽町駅を地図で開く',
+      '大手町駅を地図で開く'
+    ])
+    expect(mapLinks.map((link) => link.getAttribute('href'))).toEqual([
+      'https://www.google.com/maps/search/?api=1&query=35.681236,139.767125',
+      'https://www.google.com/maps/search/?api=1&query=35.675069,139.763328',
+      'https://www.google.com/maps/search/?api=1&query=35.68413,139.762'
+    ])
+    expect(
+      [...(stationCard as HTMLElement).querySelectorAll('.station-operators')].map((element) => element.textContent)
+    ).toEqual(['JR東日本・東京メトロ', 'JR東日本', '東京メトロ'])
   })
 
   it('太陽と潮の目安を時2桁のHH:mm表記で揃える', () => {
@@ -321,6 +348,27 @@ describe('現在地ダッシュボード', () => {
     expect(screen.getByText('標高 約10m（概算）')).toBeVisible()
     expect(screen.getByRole('button', { name: '地名を再試行' })).toBeVisible()
     expect(fetchPlace).toHaveBeenCalledTimes(2)
+  })
+
+  it('近くに海洋データがない場合は潮の目安を表示しない理由を案内する', async () => {
+    const user = userEvent.setup()
+
+    render(
+      <App
+        initialNow={fixedNow}
+        initialMode="intro"
+        geolocationProvider={{ getCurrentLocation: vi.fn().mockResolvedValue(locationFix) }}
+        tideProvider={{
+          fetchTide: vi.fn().mockResolvedValue({ status: 'not_applicable', distanceMeters: 31_000 })
+        }}
+      />
+    )
+
+    await user.click(screen.getByRole('button', { name: '現在地で表示' }))
+
+    expect(await screen.findByText(
+      '近くに対象の海洋データがないため、潮の目安は表示していません'
+    )).toBeVisible()
   })
 
   it('出典・プライバシーに外部送信と概算値の注意を表示する', async () => {

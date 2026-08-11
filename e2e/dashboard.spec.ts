@@ -117,6 +117,8 @@ test('standalone起動済みならインストール案内を表示しない', a
 })
 
 test('初回説明からGPS・地名・天気を順次表示する', async ({ page }) => {
+  await page.clock.setFixedTime(new Date('2026-08-11T04:31:00.000Z'))
+
   await page.route('https://marine-api.open-meteo.com/**', async (route) => {
     const start = Date.parse('2026-08-11T00:00:00.000Z') / 1_000
     const time = Array.from({ length: 37 }, (_, index) => start + index * 3_600)
@@ -173,16 +175,86 @@ test('初回説明からGPS・地名・天気を順次表示する', async ({ pa
   await expect(page.getByText('東京都千代田区 丸の内一丁目')).toBeVisible()
   await expect(page.getByText('標高 約16m（概算）')).toBeVisible()
   await expect(page.getByLabel('現在気温 24.5℃')).toBeVisible()
-  await expect(page.getByText('雨')).toBeVisible()
+  await expect(page.locator('.weather-condition')).toHaveText('雨')
   await expect(page.getByText('干潮の目安')).toBeVisible()
+  await expect(page.getByText(/^※約.+先の海洋モデル$/)).toBeVisible()
   await expect(page.getByText('航海・防災には使用不可です')).toBeVisible()
   await expect(page.getByText('東京駅', { exact: true }).first()).toBeVisible()
   await expect(page.getByText('東京都庁', { exact: true })).toBeVisible()
   await expect(page.getByText('千代田区役所', { exact: true })).toBeVisible()
   await expect(page.getByText('病院　3件', { exact: true })).toBeVisible()
   await expect(page.getByText('一般診療所　3件', { exact: true })).toBeVisible()
-  await expect(page.getByText('緊急時は119', { exact: true })).toBeVisible()
+  await expect(page.getByText('緊急時は119へ', { exact: true })).toBeVisible()
   await expect(page.getByText('半径10km・受診前に公式情報を確認して下さい', { exact: true })).toBeVisible()
+
+  await page.getByText('この先6時間', { exact: true }).click()
+  await expect(page.locator('.hourly-forecast .hourly-condition')).toHaveText([
+    'くもり', 'くもり', 'くもり', '雨', '雨', 'くもり'
+  ])
+
+  await page.getByText('ほかの駅を見る', { exact: true }).click()
+  const mapLinkTone = await page.evaluate(() => {
+    const readTone = (selector: string) => {
+      const style = getComputedStyle(document.querySelector<HTMLElement>(selector)!)
+      return {
+        color: style.color,
+        fontSize: style.fontSize,
+        fontWeight: style.fontWeight,
+        textDecorationLine: style.textDecorationLine
+      }
+    }
+    return {
+      stationCandidate: readTone('.station-candidate-map'),
+      government: readTone('.government-actions a:last-child')
+    }
+  })
+  expect(mapLinkTone.stationCandidate).toEqual(mapLinkTone.government)
+
+  await page.setViewportSize({ width: 390, height: 900 })
+  const contentAlignment = await page.evaluate(() => {
+    const rect = (selector: string) => document.querySelector<HTMLElement>(selector)!.getBoundingClientRect()
+    const nearestStation = rect('[data-card-id="station"] .station-row strong')
+    const candidateStation = rect('[data-card-id="station"] .station-candidate-row strong')
+    const medicalFacility = rect('[data-card-id="medical"] .medical-facility strong')
+    const governmentHeading = rect('[data-card-id="government"] .card-heading')
+    const governmentContent = rect('[data-card-id="government"] .government-office')
+    const medicalHeading = rect('[data-card-id="medical"] .card-heading')
+    const medicalContent = rect('[data-card-id="medical"] .medical-category')
+    return {
+      candidateStationDifference: Math.abs(candidateStation.left - nearestStation.left),
+      medicalFacilityDifference: Math.abs(medicalFacility.left - nearestStation.left),
+      governmentHeadingGap: governmentContent.top - governmentHeading.bottom,
+      medicalHeadingGap: medicalContent.top - medicalHeading.bottom
+    }
+  })
+  expect(contentAlignment.candidateStationDifference).toBeLessThanOrEqual(2)
+  expect(contentAlignment.medicalFacilityDifference).toBeLessThanOrEqual(2)
+  expect(Math.abs(contentAlignment.medicalHeadingGap - contentAlignment.governmentHeadingGap)).toBeLessThanOrEqual(1)
+
+  const medicalFooterLayout = await page.evaluate(() => {
+    const rect = (selector: string) => document.querySelector<HTMLElement>(selector)!.getBoundingClientRect()
+    const card = rect('[data-card-id="medical"]')
+    const note = rect('[data-card-id="medical"] .medical-note .meta-line')
+    const emergency = rect('[data-card-id="medical"] .medical-note .danger-line')
+    const source = rect('[data-card-id="medical"] .medical-note .medical-source-link')
+    const sourceElement = document.querySelector<HTMLElement>('[data-card-id="medical"] .medical-source-link')!
+    const sourceStyle = getComputedStyle(sourceElement)
+    return {
+      emergencyBelowNote: emergency.top >= note.bottom,
+      emergencyLeftDifference: Math.abs(emergency.left - note.left),
+      emergencySourceCenterDifference: Math.abs(
+        (emergency.top + emergency.height / 2) - (source.top + source.height / 2)
+      ),
+      sourceInsideCard: source.right <= card.right,
+      sourceSingleLine: source.height <= Number.parseFloat(sourceStyle.lineHeight) * 1.1
+        && sourceElement.scrollWidth <= sourceElement.clientWidth
+    }
+  })
+  expect(medicalFooterLayout.emergencyBelowNote).toBe(true)
+  expect(medicalFooterLayout.emergencyLeftDifference).toBeLessThanOrEqual(1)
+  expect(medicalFooterLayout.emergencySourceCenterDifference).toBeLessThanOrEqual(1)
+  expect(medicalFooterLayout.sourceInsideCard).toBe(true)
+  expect(medicalFooterLayout.sourceSingleLine).toBe(true)
 
   await page.getByRole('button', { name: '保存データを消去' }).click()
   await expect(page.getByRole('dialog', { name: '保存データを消去' })).toBeVisible()
@@ -229,10 +301,10 @@ test('モバイル画面が指定の順序と日時装飾で表示される', as
   )
   expect(cardIds).toEqual([
     'location',
+    'station',
     'weather',
     'solar',
     'tide',
-    'station',
     'government',
     'medical'
   ])
@@ -276,21 +348,85 @@ test('表示色モードをライト・ダーク・自動から選んで保存�
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'system')
 })
 
+test('この先6時間に時間ごとの天気状態を表示する', async ({ page }) => {
+  await page.goto('/?preview=1')
+  await page.getByText('この先6時間', { exact: true }).click()
+
+  const hourlyConditions = page.locator('.hourly-forecast .hourly-condition')
+  await expect(hourlyConditions).toHaveCount(6)
+  await expect(hourlyConditions).toHaveText(['晴れ', '晴れ', 'くもり', '雨', '雨', 'くもり'])
+})
+
+test('太陽と潮の時刻を同じ左右位置に揃える', async ({ page }) => {
+  for (const width of [390, 900]) {
+    await page.setViewportSize({ width, height: 900 })
+    await page.goto('/?preview=1')
+
+    const timeCenters = await page.evaluate(() => {
+      const centers = (cardId: string) => Array.from(
+        document.querySelectorAll(`[data-card-id="${cardId}"] .split-values strong`),
+        (element) => {
+          const range = document.createRange()
+          range.selectNodeContents(element)
+          const rect = range.getBoundingClientRect()
+          return rect.left + rect.width / 2
+        }
+      )
+      return { solar: centers('solar'), tide: centers('tide') }
+    })
+
+    expect(timeCenters.solar).toHaveLength(2)
+    expect(timeCenters.tide).toHaveLength(2)
+    expect(Math.abs(timeCenters.solar[0] - timeCenters.tide[0])).toBeLessThanOrEqual(1)
+    expect(Math.abs(timeCenters.solar[1] - timeCenters.tide[1])).toBeLessThanOrEqual(1)
+  }
+})
+
 test('正式アイコンと控えめな文字サイズで現在地への地図導線を表示する', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/?preview=1')
+
+  const iconCornerAlpha = await page.evaluate(async () => {
+    const readCorners = async (src: string) => {
+      const icon = new Image()
+      icon.src = src
+      await icon.decode()
+      const canvas = document.createElement('canvas')
+      canvas.width = icon.naturalWidth
+      canvas.height = icon.naturalHeight
+      const context = canvas.getContext('2d', { willReadFrequently: true })!
+      context.drawImage(icon, 0, 0)
+      return [
+        context.getImageData(0, 0, 1, 1).data[3],
+        context.getImageData(canvas.width - 1, 0, 1, 1).data[3],
+        context.getImageData(0, canvas.height - 1, 1, 1).data[3],
+        context.getImageData(canvas.width - 1, canvas.height - 1, 1, 1).data[3]
+      ]
+    }
+    return {
+      any192: await readCorners('/icon-192.png'),
+      any512: await readCorners('/icon-512.png'),
+      maskable512: await readCorners('/icon-maskable-512.png')
+    }
+  })
+  expect(iconCornerAlpha.any192).toEqual([0, 0, 0, 0])
+  expect(iconCornerAlpha.any512).toEqual([0, 0, 0, 0])
+  expect(iconCornerAlpha.maskable512).toEqual([255, 255, 255, 255])
 
   const brandIcon = page.locator('.brand-icon')
   await expect(brandIcon).toHaveAttribute('src', /favicon\.svg$/)
   await expect(page.getByText('imacoco-info', { exact: true })).toBeVisible()
   await expect(page.getByText('表示距離はすべて現在地からの直線距離です', { exact: true })).toHaveCount(1)
-  await expect(page.getByText('地図', { exact: true })).toHaveCount(2)
+  await expect(page.getByText('地図', { exact: true })).toHaveCount(4)
   await expect(page.getByText('地図で開く', { exact: true })).toHaveCount(0)
   await expect(page.locator('.updated-at')).toHaveCount(0)
   await expect(page.getByRole('link', { name: '現在地を地図で開く' })).toHaveAttribute(
     'href',
     'https://www.google.com/maps/search/?api=1&query=35.681236,139.767125'
   )
+  await expect(page.getByRole('link', { name: /駅を地図で開く$/ })).toHaveCount(1)
+  await page.getByText('ほかの駅を見る', { exact: true }).click()
+  await expect(page.getByRole('link', { name: /駅を地図で開く$/ })).toHaveCount(3)
 
   const metrics = await page.evaluate(() => {
     const rect = (selector: string) => document.querySelector<HTMLElement>(selector)!.getBoundingClientRect()
@@ -311,7 +447,12 @@ test('正式アイコンと控えめな文字サイズで現在地への地図�
       getComputedStyle(document.querySelector('.header-button')!).borderColor,
       getComputedStyle(document.querySelector('.theme-picker select')!).borderColor
     ]
-    const cardContentGaps = ['weather', 'solar', 'tide', 'medical'].map((id) => {
+    const compactCardContentGaps = ['weather', 'solar', 'tide'].map((id) => {
+      const heading = rect(`[data-card-id="${id}"] .card-heading`)
+      const body = rect(`[data-card-id="${id}"] .card-body`)
+      return body.top - heading.bottom
+    })
+    const institutionContentGaps = ['government', 'medical'].map((id) => {
       const heading = rect(`[data-card-id="${id}"] .card-heading`)
       const body = rect(`[data-card-id="${id}"] .card-body`)
       return body.top - heading.bottom
@@ -361,7 +502,8 @@ test('正式アイコンと控えめな文字サイズで現在地への地図�
       weatherTopDifference: Math.abs(rect('.weather-state-icon').top - rect('.weather-main strong').top),
       weatherCopyHeightDifference: Math.abs(weatherIcon.height - weatherCopy.height),
       temperatureUnitWeight: Number.parseInt(getComputedStyle(document.querySelector('.temperature-unit')!).fontWeight, 10),
-      cardContentGaps,
+      compactCardContentGaps,
+      institutionContentGaps,
       cardHeadingTopGaps,
       annotationStyles,
       shellBackground: getComputedStyle(document.querySelector('.app-shell')!).backgroundImage,
@@ -389,7 +531,7 @@ test('正式アイコンと控えめな文字サイズで現在地への地図�
   expect(metrics.mapButtonFontSizes[0]).toBe(16)
   expect(new Set(metrics.mapButtonIconWidths).size).toBe(1)
   expect(metrics.addressFontSize).toBeGreaterThanOrEqual(16.5)
-  expect(metrics.addressFontSize).toBeGreaterThan(metrics.locationHeadingFontSize)
+  expect(metrics.addressFontSize).toBeGreaterThanOrEqual(metrics.locationHeadingFontSize)
   expect(metrics.addressLineHeight / metrics.addressFontSize).toBeGreaterThanOrEqual(1.4)
   expect(metrics.locationPinWidth).toBeLessThanOrEqual(48)
   expect(metrics.locationPinMarkWidth).toBeLessThanOrEqual(26)
@@ -401,7 +543,9 @@ test('正式アイコンと控えめな文字サイズで現在地への地図�
   expect(metrics.weatherTopDifference).toBeLessThanOrEqual(1)
   expect(metrics.weatherCopyHeightDifference).toBeLessThanOrEqual(1)
   expect(metrics.temperatureUnitWeight).toBe(400)
-  expect(Math.max(...metrics.cardContentGaps), JSON.stringify(metrics.cardContentGaps)).toBeLessThanOrEqual(4)
+  expect(Math.max(...metrics.compactCardContentGaps), JSON.stringify(metrics.compactCardContentGaps)).toBeLessThanOrEqual(4)
+  expect(Math.min(...metrics.institutionContentGaps)).toBeGreaterThanOrEqual(8)
+  expect(Math.abs(metrics.institutionContentGaps[0] - metrics.institutionContentGaps[1])).toBeLessThanOrEqual(1)
   expect(Math.max(...metrics.cardHeadingTopGaps), JSON.stringify(metrics.cardHeadingTopGaps)).toBeLessThanOrEqual(12)
   expect(new Set(metrics.annotationStyles.map(({ fontSize }) => fontSize)).size).toBe(1)
   expect(new Set(metrics.annotationStyles.map(({ lineHeight }) => lineHeight)).size).toBe(1)
@@ -425,6 +569,83 @@ test('住所ピンをPCとスマホの両方で住所側に寄せる', async ({ 
     })
 
     expect(gap, `${width}px`).toBeLessThanOrEqual(maximumGap)
+  }
+})
+
+test('最寄り駅の情報はスマホだけ少し右へ寄せる', async ({ page }) => {
+  const stationContentInset = async (width: number) => {
+    await page.setViewportSize({ width, height: 900 })
+    await page.goto('/?preview=1')
+    return page.evaluate(() => {
+      const card = document.querySelector<HTMLElement>('[data-card-id="station"]')!.getBoundingClientRect()
+      const content = document.querySelector<HTMLElement>('.station-row > div:first-child strong')!.getBoundingClientRect()
+      return content.left - card.left
+    })
+  }
+
+  const desktopInset = await stationContentInset(900)
+  const mobileInset = await stationContentInset(390)
+
+  expect(desktopInset).toBeGreaterThanOrEqual(20)
+  expect(desktopInset).toBeLessThanOrEqual(22)
+  expect(mobileInset).toBeGreaterThan(desktopInset)
+  expect(mobileInset - desktopInset).toBeLessThanOrEqual(4)
+})
+
+test('スマホの有効幅411pxでは東京の住所を見出し以上の文字サイズで一行表示する', async ({ page }) => {
+  await page.setViewportSize({ width: 411, height: 1032 })
+  await page.goto('/?preview=1')
+
+  const addressLayout = await page.evaluate(() => {
+    const address = document.querySelector<HTMLElement>('.location-name')!
+    const heading = document.querySelector<HTMLElement>('.location-card .card-heading h2')!
+    const mapLink = document.querySelector<HTMLElement>('.location-map-link')!
+    const addressStyle = getComputedStyle(address)
+    const headingStyle = getComputedStyle(heading)
+    const addressRect = address.getBoundingClientRect()
+    const mapLinkRect = mapLink.getBoundingClientRect()
+    return {
+      addressFontSize: Number.parseFloat(addressStyle.fontSize),
+      headingFontSize: Number.parseFloat(headingStyle.fontSize),
+      addressHeight: addressRect.height,
+      addressLineHeight: Number.parseFloat(addressStyle.lineHeight),
+      clientWidth: address.clientWidth,
+      scrollWidth: address.scrollWidth,
+      centerDifference: Math.abs(
+        (addressRect.top + addressRect.height / 2) - (mapLinkRect.top + mapLinkRect.height / 2)
+      )
+    }
+  })
+
+  expect(addressLayout.addressFontSize).toBeGreaterThanOrEqual(addressLayout.headingFontSize)
+  expect(addressLayout.addressHeight).toBeLessThanOrEqual(addressLayout.addressLineHeight * 1.1)
+  expect(addressLayout.scrollWidth).toBeLessThanOrEqual(addressLayout.clientWidth)
+  expect(addressLayout.centerDifference).toBeLessThanOrEqual(1)
+})
+
+test('狭いスマホでも住所ピンと地図ボタンの配置を維持する', async ({ page }) => {
+  for (const width of [320, 360]) {
+    await page.setViewportSize({ width, height: 900 })
+    await page.goto('/?preview=1')
+
+    const layout = await page.evaluate(() => {
+      const rect = (selector: string) => document.querySelector<HTMLElement>(selector)!.getBoundingClientRect()
+      const pin = rect('.location-pin')
+      const address = rect('.location-name')
+      const locationMap = rect('.location-map-link')
+      const stationMap = rect('[data-card-id="station"] .primary-button.map-action-button')
+      return {
+        pinBeforeAddress: pin.right <= address.left,
+        mapWidthDifference: Math.abs(locationMap.width - stationMap.width),
+        mapHeightDifference: Math.abs(locationMap.height - stationMap.height),
+        mapRightDifference: Math.abs(locationMap.right - stationMap.right)
+      }
+    })
+
+    expect(layout.pinBeforeAddress, `${width}px`).toBe(true)
+    expect(layout.mapWidthDifference, `${width}px`).toBeLessThanOrEqual(1)
+    expect(layout.mapHeightDifference, `${width}px`).toBeLessThanOrEqual(1)
+    expect(layout.mapRightDifference, `${width}px`).toBeLessThanOrEqual(1)
   }
 })
 
@@ -456,8 +677,13 @@ test('補足情報を横一列に整理して現在地カードをコンパク�
   expect(locationName!.height).toBeLessThan(56)
 
   await sameRow('精度の目安 ±18m', '標高 約10m（概算）')
-  await sameRow('約12km先の海洋モデル', '航海・防災には使用不可です')
-  await sameRow('その他の医療機関を確認中…', '緊急時は119')
+  await sameRow('※約12km先の海洋モデル', '航海・防災には使用不可です')
+  await sameRow('緊急時は119へ', '医療情報ネットで確認')
+  const medicalLoadingNote = await page.getByText('その他の医療機関を確認中…', { exact: true }).boundingBox()
+  const emergencyNote = await page.getByText('緊急時は119へ', { exact: true }).boundingBox()
+  expect(medicalLoadingNote).not.toBeNull()
+  expect(emergencyNote).not.toBeNull()
+  expect(emergencyNote!.y).toBeGreaterThanOrEqual(medicalLoadingNote!.y + medicalLoadingNote!.height)
 
   const medicalCard = await page.locator('[data-card-id="medical"]').boundingBox()
   const distanceNotice = await page.getByText('表示距離はすべて現在地からの直線距離です', { exact: true }).boundingBox()
@@ -538,7 +764,7 @@ test('測位できない再訪時は24時間以内の前回位置を明示して
   await expect(page.getByText('前回の位置', { exact: true })).toBeVisible()
   const footerStatus = page.locator('.footer-meta')
   await expect(footerStatus.getByText('一部に15分以内の保存済み情報を表示しています', { exact: true })).toHaveCount(1)
-  await expect(footerStatus).toContainText('mvp-0.1.2')
+  await expect(footerStatus).toContainText('mvp-0.2.0')
   await expect(page.getByText('現在地を取得できないため、24時間以内の前回位置を表示しています')).toBeVisible()
 })
 
@@ -699,5 +925,5 @@ test('天気の気温補足値を一列に揃え、MVP版を表示する', async
     Math.max(...temperatureValueTops) - Math.min(...temperatureValueTops),
     `weather temperature value tops: ${JSON.stringify(temperatureValueTops)}`
   ).toBeLessThanOrEqual(1)
-  await expect.soft(page.locator('.app-footer')).toContainText('mvp-0.1.2')
+  await expect.soft(page.locator('.app-footer')).toContainText('mvp-0.2.0')
 })

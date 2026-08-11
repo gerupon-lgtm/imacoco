@@ -10,4 +10,12 @@ if (manifest.name !== expectedName || manifest.short_name !== expectedName) {
   )
 }
 
+const iconDefinitions = new Map((manifest.icons ?? []).map((icon) => [icon.src, icon]))
+if (iconDefinitions.get('icon-512.png')?.purpose !== 'any') {
+  throw new Error('PWA manifest must use icon-512.png as the transparent any-purpose icon')
+}
+if (iconDefinitions.get('icon-maskable-512.png')?.purpose !== 'maskable') {
+  throw new Error('PWA manifest must provide a separate opaque maskable icon')
+}
+
 process.stdout.write(`PWA manifest name ok: ${expectedName}\n`)
