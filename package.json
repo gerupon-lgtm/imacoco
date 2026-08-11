@@ -1,7 +1,7 @@
 {
   "name": "imakoko-info",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "engines": {
     "node": ">=24 <25"
@@ -20,7 +20,8 @@
     "data:validate": "node scripts/validate-static-data.mjs",
     "version:check": "node scripts/check-version.mjs",
     "security:check": "node scripts/check-security.mjs",
-    "check": "npm run version:check && npm run security:check && npm run data:validate && npm run typecheck && npm test && npm run build"
+    "manifest:check": "node scripts/check-pwa-manifest.mjs",
+    "check": "npm run version:check && npm run security:check && npm run data:validate && npm run typecheck && npm test && npm run build && npm run manifest:check"
   },
   "dependencies": {
     "@fontsource/kosugi": "^5.3.0",

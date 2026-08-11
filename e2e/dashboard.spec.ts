@@ -538,7 +538,7 @@ test('測位できない再訪時は24時間以内の前回位置を明示して
   await expect(page.getByText('前回の位置', { exact: true })).toBeVisible()
   const footerStatus = page.locator('.footer-meta')
   await expect(footerStatus.getByText('一部に15分以内の保存済み情報を表示しています', { exact: true })).toHaveCount(1)
-  await expect(footerStatus).toContainText('mvp-0.1.0')
+  await expect(footerStatus).toContainText('mvp-0.1.1')
   await expect(page.getByText('現在地を取得できないため、24時間以内の前回位置を表示しています')).toBeVisible()
 })
 
@@ -606,6 +606,7 @@ test('ダークモードで主要カードのアイコンと操作文字を判�
   await page.emulateMedia({ colorScheme: 'dark' })
   await page.goto('/?preview=1')
   await page.evaluate(() => {
+    window.dispatchEvent(new Event('imakoko:pwa-update'))
     const fixture = document.createElement('section')
     fixture.className = 'info-card contrast-test-fixture'
     fixture.innerHTML = `
@@ -669,7 +670,10 @@ test('ダークモードで主要カードのアイコンと操作文字を判�
       stationMap: contrastFor('[data-card-id="station"] .primary-button'),
       governmentName: contrastFor('.contrast-test-fixture .government-office strong'),
       medicalMap: contrastFor('.contrast-test-fixture .medical-actions a:last-child'),
-      medicalSource: contrastFor('.contrast-test-fixture .medical-source-link a')
+      medicalSource: contrastFor('.contrast-test-fixture .medical-source-link a'),
+      updateMessage: contrastFor('.pwa-update-banner > span:first-child'),
+      updateLaterButton: contrastFor('.pwa-update-banner button:first-child'),
+      updateApplyButton: contrastFor('.pwa-update-banner button:last-child')
     }
   })
 
@@ -695,5 +699,5 @@ test('天気の気温補足値を一列に揃え、MVP版を表示する', async
     Math.max(...temperatureValueTops) - Math.min(...temperatureValueTops),
     `weather temperature value tops: ${JSON.stringify(temperatureValueTops)}`
   ).toBeLessThanOrEqual(1)
-  await expect.soft(page.locator('.app-footer')).toContainText('mvp-0.1.0')
+  await expect.soft(page.locator('.app-footer')).toContainText('mvp-0.1.1')
 })

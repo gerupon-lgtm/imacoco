@@ -11,6 +11,11 @@
   --info-note: #176785;
   --primary-action-bg: #082f67;
   --primary-action-fg: #ffffff;
+  --update-banner-bg: #e8f8ff;
+  --update-banner-fg: #082f67;
+  --update-banner-border: #7cc4df;
+  --update-banner-secondary-bg: #ffffff;
+  --update-banner-secondary-fg: #082f67;
   --annotation-font-size: 0.82rem;
   --annotation-line-height: 1.45;
   --row-surface: rgba(255, 255, 255, 0.58);
@@ -1076,10 +1081,10 @@ a {
   max-width: 960px;
   margin: 10px auto 0;
   padding: 10px 14px;
-  border: 1px solid #7cc4df;
+  border: 1px solid var(--update-banner-border);
   border-radius: 10px;
-  background: #e8f8ff;
-  color: var(--navy);
+  background: var(--update-banner-bg);
+  color: var(--update-banner-fg);
   box-shadow: 0 5px 16px rgba(26, 78, 109, 0.1);
 }
 
@@ -1090,10 +1095,10 @@ a {
 
 .pwa-update-banner button {
   padding: 6px 10px;
-  border: 1px solid var(--navy);
+  border: 1px solid var(--update-banner-fg);
   border-radius: 7px;
-  background: white;
-  color: var(--navy);
+  background: var(--update-banner-secondary-bg);
+  color: var(--update-banner-secondary-fg);
   cursor: pointer;
 }
 
@@ -1631,6 +1636,11 @@ a {
   --info-note: #9be6f7;
   --primary-action-bg: #7ed5e8;
   --primary-action-fg: #071a2a;
+  --update-banner-bg: #12384d;
+  --update-banner-fg: #d9f1ff;
+  --update-banner-border: #5eb9d1;
+  --update-banner-secondary-bg: #0f3144;
+  --update-banner-secondary-fg: #d9f1ff;
   --row-surface: rgba(15, 49, 68, 0.92);
 }
 

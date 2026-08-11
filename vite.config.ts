@@ -17,7 +17,7 @@ export default defineConfig({
       },
       manifest: {
         name: 'いまここインフォ',
-        short_name: 'いまここ',
+        short_name: 'いまここインフォ',
         description: '現在地の概況を一画面で確認できるPWA',
         lang: 'ja',
         start_url: '.',
