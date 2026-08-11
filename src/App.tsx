@@ -28,8 +28,10 @@ import {
   type PlaceSummary
 } from './providers/gsiReverseGeocoder'
 import {
+  compactWeatherCodeLabel,
   createOpenMeteoProvider,
   WeatherProviderError,
+  type HourlyWeather,
   type OpenMeteoProvider,
   type OpenMeteoSummary
 } from './providers/openMeteo'
@@ -231,6 +233,88 @@ function isGovernmentSummary(value: unknown): value is GovernmentSummary {
   )
 }
 
+const previewStationSummary: StationSummary = {
+  searchRadiusKm: 30,
+  dataVersion: '2025-12-31',
+  sourceNotice: '距離は直線距離です。徒歩距離・所要時間・運行状況ではありません。',
+  stations: [
+    {
+      id: 'preview-tokyo',
+      name: '東京',
+      coordinates: { latitude: 35.681236, longitude: 139.767125 },
+      lines: [
+        { lineName: 'JR線', operatorName: 'JR東日本', operatorType: '鉄道' },
+        { lineName: '丸ノ内線', operatorName: '東京メトロ', operatorType: '鉄道' }
+      ],
+      sourceRelationIds: ['preview-tokyo'],
+      installedStartYear: 1914,
+      installedEndYear: 9999,
+      dataVersion: '2025-12-31',
+      distanceMeters: 200,
+      bearingDegrees: 45,
+      direction8: '北東'
+    },
+    {
+      id: 'preview-yurakucho',
+      name: '有楽町',
+      coordinates: { latitude: 35.675069, longitude: 139.763328 },
+      lines: [{ lineName: '山手線', operatorName: 'JR東日本', operatorType: '鉄道' }],
+      sourceRelationIds: ['preview-yurakucho'],
+      installedStartYear: 1910,
+      installedEndYear: 9999,
+      dataVersion: '2025-12-31',
+      distanceMeters: 760,
+      bearingDegrees: 210,
+      direction8: '南西'
+    },
+    {
+      id: 'preview-otemachi',
+      name: '大手町',
+      coordinates: { latitude: 35.68413, longitude: 139.762 },
+      lines: [{ lineName: '東西線', operatorName: '東京メトロ', operatorType: '鉄道' }],
+      sourceRelationIds: ['preview-otemachi'],
+      installedStartYear: 1956,
+      installedEndYear: 9999,
+      dataVersion: '2025-12-31',
+      distanceMeters: 820,
+      bearingDegrees: 315,
+      direction8: '北西'
+    }
+  ]
+}
+
+const previewHourlyWeather: HourlyWeather[] = [
+  { at: '2026-08-11T23:00:00.000Z', temperatureC: 26, precipitationProbability: 60, weatherCode: 0, weatherLabel: '快晴' },
+  { at: '2026-08-12T00:00:00.000Z', temperatureC: 25, precipitationProbability: 82, weatherCode: 1, weatherLabel: '晴れ' },
+  { at: '2026-08-12T01:00:00.000Z', temperatureC: 25, precipitationProbability: 91, weatherCode: 3, weatherLabel: 'くもり' },
+  { at: '2026-08-12T02:00:00.000Z', temperatureC: 26, precipitationProbability: 93, weatherCode: 61, weatherLabel: '雨' },
+  { at: '2026-08-12T03:00:00.000Z', temperatureC: 26, precipitationProbability: 94, weatherCode: 80, weatherLabel: 'にわか雨' },
+  { at: '2026-08-12T04:00:00.000Z', temperatureC: 27, precipitationProbability: 78, weatherCode: 2, weatherLabel: '晴れ時々くもり' }
+]
+
+function HourlyForecast({ hours }: { hours: HourlyWeather[] }) {
+  return (
+    <div className="hourly-forecast">
+      {hours.map((hour) => {
+        const timeLabel = formatJstDateTime(new Date(hour.at)).timeLabel
+        const conditionLabel = compactWeatherCodeLabel(hour.weatherCode)
+        return (
+          <div
+            key={hour.at}
+            role="group"
+            aria-label={`${timeLabel}、気温${Math.round(hour.temperatureC)}℃、${conditionLabel}、降水確率${hour.precipitationProbability}%`}
+          >
+            <time dateTime={hour.at}>{timeLabel}</time>
+            <span>{Math.round(hour.temperatureC)}℃</span>
+            <span className="hourly-condition">{conditionLabel}</span>
+            <span>{hour.precipitationProbability}%</span>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 function PreviewDashboard() {
   return (
     <main className="dashboard">
@@ -262,6 +346,11 @@ function PreviewDashboard() {
         </div>
       </DashboardCard>
 
+      <StationCard
+        state={{ status: 'success', data: previewStationSummary, source: 'live' }}
+        onRetry={async () => undefined}
+      />
+
       <DashboardCard id="weather" title="天気" icon={<AppIcon name="sun" />}>
         <div className="weather-grid">
           <div className="weather-main">
@@ -278,7 +367,10 @@ function PreviewDashboard() {
             <div><dt>降水</dt><dd>20%</dd></div>
           </dl>
         </div>
-        <details className="card-details"><summary>この先6時間</summary></details>
+        <details className="card-details">
+          <summary>この先6時間</summary>
+          <HourlyForecast hours={previewHourlyWeather} />
+        </details>
       </DashboardCard>
 
       <DashboardCard id="solar" title="太陽" icon={<AppIcon name="sun" />} className="compact-card">
@@ -295,21 +387,8 @@ function PreviewDashboard() {
           <div><span>満潮</span><strong>21:42</strong></div>
         </div>
         <div className="support-line tide-note">
-          <p className="meta-line">約12km先の海洋モデル</p>
+          <p className="meta-line">※約12km先の海洋モデル</p>
           <p className="danger-line">航海・防災には使用不可です</p>
-        </div>
-      </DashboardCard>
-
-      <DashboardCard id="station" title="最寄り駅" icon={<AppIcon name="train" />}>
-        <div className="station-row">
-          <div>
-            <p><strong>東京駅</strong> <span className="meta-inline">約200m 北東</span></p>
-            <p className="tags"><span>JR</span><span>東京メトロ</span><span className="plain-tag">複数路線</span></p>
-          </div>
-          <button type="button" className="primary-button map-action-button"><AppIcon name="map" />地図</button>
-        </div>
-        <div className="station-note">
-          <details className="inline-details"><summary>ほかの駅を見る</summary></details>
         </div>
       </DashboardCard>
 
@@ -324,7 +403,8 @@ function PreviewDashboard() {
         <div className="loading-bars" aria-label="その他の医療機関を確認中"><i /><i /><i /><i /></div>
         <div className="support-line medical-note">
           <p className="meta-line">その他の医療機関を確認中…</p>
-          <p className="danger-line">緊急時は119</p>
+          <p className="danger-line">緊急時は119へ</p>
+          <MedicalSourceLink />
         </div>
       </DashboardCard>
       <p className="dashboard-distance-note">表示距離はすべて現在地からの直線距離です</p>
@@ -395,6 +475,101 @@ function AsyncCardMessage<T>({
   return <div className="pending-card"><span>{idleLabel}</span></div>
 }
 
+type DisplayStation = StationSummary['stations'][number]
+
+function stationMapUrl(station: DisplayStation) {
+  return `https://www.google.com/maps/search/?api=1&query=${station.coordinates.latitude},${station.coordinates.longitude}`
+}
+
+function StationMapLink({ station, className = '' }: { station: DisplayStation; className?: string }) {
+  return (
+    <a
+      className={className}
+      href={stationMapUrl(station)}
+      target="_blank"
+      rel="noreferrer"
+      aria-label={`${station.name}駅を地図で開く`}
+    ><AppIcon name="map" />地図</a>
+  )
+}
+
+function StationRouteTags({ station }: { station: DisplayStation }) {
+  const operatorNames = [...new Set(station.lines.map((line) => line.operatorName))]
+  return (
+    <>
+      <p className="tags">
+        {station.lines.slice(0, 3).map((line) => (
+          <span key={`${line.operatorName}-${line.lineName}`}>{line.lineName}</span>
+        ))}
+      </p>
+      <p className="station-operators">{operatorNames.join('・')}</p>
+    </>
+  )
+}
+
+function StationCard({ state, onRetry }: { state: CardDataState<StationSummary>; onRetry: () => Promise<void> }) {
+  if (state.status !== 'success') {
+    return (
+      <DashboardCard id="station" title="最寄り駅" icon={<AppIcon name="train" />}>
+        <AsyncCardMessage
+          state={state}
+          loadingLabel="最寄り駅を確認中…"
+          idleLabel="現在地の取得後に読み込みます"
+          retryLabel="駅を再試行"
+          onRetry={onRetry}
+        />
+      </DashboardCard>
+    )
+  }
+
+  if (state.data.stations.length === 0) {
+    return (
+      <DashboardCard id="station" title="最寄り駅" icon={<AppIcon name="train" />}>
+        <div className="pending-card"><span>30km以内に駅が見つかりませんでした</span></div>
+      </DashboardCard>
+    )
+  }
+
+  const [nearest, ...candidates] = state.data.stations
+  return (
+    <DashboardCard id="station" title="最寄り駅" icon={<AppIcon name="train" />}>
+      <div className="station-row">
+        <div>
+          <p><strong>{nearest.name}駅</strong>{' '}
+            <span className="meta-inline">
+              {formatApproximateDistance(nearest.distanceMeters)} {nearest.direction8}
+            </span>
+          </p>
+          <StationRouteTags station={nearest} />
+        </div>
+        <StationMapLink station={nearest} className="primary-button map-action-button" />
+      </div>
+      {candidates.length > 0 && (
+        <div className="station-note">
+          <details className="inline-details station-candidates">
+            <summary>ほかの駅を見る</summary>
+            <div className="station-candidate-list">
+              {candidates.map((station) => (
+                <div className="station-candidate-row" key={station.id}>
+                  <div>
+                    <p><strong>{station.name}駅</strong>{' '}
+                      <span className="meta-inline">
+                        {formatApproximateDistance(station.distanceMeters)} {station.direction8}
+                      </span>
+                    </p>
+                    <StationRouteTags station={station} />
+                  </div>
+                  <StationMapLink station={station} className="station-candidate-map" />
+                </div>
+              ))}
+            </div>
+          </details>
+        </div>
+      )}
+    </DashboardCard>
+  )
+}
+
 function MedicalFacilityList({ facilities }: { facilities: NearbyMedicalFacility[] }) {
   if (facilities.length === 0) return <p className="medical-empty">この範囲では見つかりませんでした</p>
   return (
@@ -416,6 +591,16 @@ function MedicalFacilityList({ facilities }: { facilities: NearbyMedicalFacility
         </div>
       ))}
     </div>
+  )
+}
+
+function MedicalSourceLink() {
+  return (
+    <p className="medical-source-link">
+      <a href="https://www.iryou.teikyouseido.mhlw.go.jp/znk-web/juminkanja/S2300/initialize" target="_blank" rel="noreferrer">
+        医療情報ネットで確認
+      </a>
+    </p>
   )
 }
 
@@ -526,6 +711,8 @@ function LiveDashboard({
         )}
       </DashboardCard>
 
+      <StationCard state={stationState} onRetry={retryStation} />
+
       <DashboardCard id="weather" title="天気" icon={<AppIcon name="sun" />}>
         {weather ? (
           <>
@@ -547,15 +734,7 @@ function LiveDashboard({
             {weather.nextSixHours.length > 0 && (
               <details className="card-details">
                 <summary>この先6時間</summary>
-                <div className="hourly-forecast">
-                  {weather.nextSixHours.map((hour) => (
-                    <div key={hour.at}>
-                      <time dateTime={hour.at}>{formatJstDateTime(new Date(hour.at)).timeLabel}</time>
-                      <span>{Math.round(hour.temperatureC)}℃</span>
-                      <span>{hour.precipitationProbability}%</span>
-                    </div>
-                  ))}
-                </div>
+                <HourlyForecast hours={weather.nextSixHours} />
               </details>
             )}
           </>
@@ -599,7 +778,7 @@ function LiveDashboard({
               ))}
             </div>
             <div className="support-line tide-note">
-              <p className="meta-line">{formatApproximateDistance(tideState.data.summary.distanceMeters)}先の海洋モデル</p>
+              <p className="meta-line">※{formatApproximateDistance(tideState.data.summary.distanceMeters)}先の海洋モデル</p>
               <p className="danger-line">航海・防災には使用不可です</p>
             </div>
           </>
@@ -612,50 +791,6 @@ function LiveDashboard({
             idleLabel="現在地の取得後に読み込みます"
             retryLabel="潮の目安を再試行"
             onRetry={retryTide}
-          />
-        )}
-      </DashboardCard>
-      <DashboardCard id="station" title="最寄り駅" icon={<AppIcon name="train" />}>
-        {stationState.status === 'success' && stationState.data.stations.length > 0 ? (
-          <>
-            <div className="station-row">
-              <div>
-                <p><strong>{stationState.data.stations[0].name}駅</strong>{' '}
-                  <span className="meta-inline">
-                    {formatApproximateDistance(stationState.data.stations[0].distanceMeters)} {stationState.data.stations[0].direction8}
-                  </span>
-                </p>
-                <p className="tags">
-                  {stationState.data.stations[0].lines.slice(0, 3).map((line) => <span key={`${line.operatorName}-${line.lineName}`}>{line.lineName}</span>)}
-                </p>
-              </div>
-              <a
-                className="primary-button map-action-button"
-                href={`https://www.google.com/maps/search/?api=1&query=${stationState.data.stations[0].coordinates.latitude},${stationState.data.stations[0].coordinates.longitude}`}
-                target="_blank"
-                rel="noreferrer"
-              ><AppIcon name="map" />地図</a>
-            </div>
-            {stationState.data.stations.length > 1 && (
-              <div className="station-note">
-                <details className="inline-details station-candidates">
-                  <summary>ほかの駅を見る</summary>
-                  {stationState.data.stations.slice(1).map((station) => (
-                    <p key={station.id}><strong>{station.name}駅</strong> {formatApproximateDistance(station.distanceMeters)} {station.direction8}</p>
-                  ))}
-                </details>
-              </div>
-            )}
-          </>
-        ) : stationState.status === 'success' ? (
-          <div className="pending-card"><span>30km以内に駅が見つかりませんでした</span></div>
-        ) : (
-          <AsyncCardMessage
-            state={stationState}
-            loadingLabel="最寄り駅を確認中…"
-            idleLabel="現在地の取得後に読み込みます"
-            retryLabel="駅を再試行"
-            onRetry={retryStation}
           />
         )}
       </DashboardCard>
@@ -708,10 +843,10 @@ function LiveDashboard({
             </details>
             <div className="support-line medical-note">
               <p className="meta-line">半径{medicalState.data.searchRadiusKm}km・受診前に公式情報を確認して下さい</p>
-              <p className="danger-line">緊急時は119</p>
+              <p className="danger-line">緊急時は119へ</p>
+              <MedicalSourceLink />
             </div>
             {medicalState.data.partialData && <p className="data-source-note">周辺データの一部を取得できませんでした</p>}
-            <p className="medical-source-link"><a href="https://www.iryou.teikyouseido.mhlw.go.jp/znk-web/juminkanja/S2300/initialize" target="_blank" rel="noreferrer">医療情報ネットで確認</a></p>
           </>
         ) : (
           <AsyncCardMessage

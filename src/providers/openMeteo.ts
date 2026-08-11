@@ -136,6 +136,15 @@ export function weatherCodeLabel(code: number) {
   return '天気情報'
 }
 
+export function compactWeatherCodeLabel(code: number) {
+  if ([0, 1].includes(code)) return '晴れ'
+  if ([2, 3, 45, 48].includes(code)) return 'くもり'
+  if ([51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82].includes(code)) return '雨'
+  if ([71, 73, 75, 77, 85, 86].includes(code)) return '雪'
+  if ([95, 96, 99].includes(code)) return '雷雨'
+  return '天気'
+}
+
 export function buildOpenMeteoUrl(coordinates: Coordinates) {
   const url = new URL(OPEN_METEO_URL)
   url.searchParams.set('latitude', coordinates.latitude.toFixed(2))

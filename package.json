@@ -1,7 +1,7 @@
 {
   "name": "imakoko-info",
   "private": true,
-  "version": "0.1.2",
+  "version": "0.2.0",
   "type": "module",
   "engines": {
     "node": ">=24 <25"
@@ -13,6 +13,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
+    "icons:generate": "node scripts/generate-pwa-icons.mjs",
     "data:municipalities": "node scripts/generate-gsi-municipalities.mjs",
     "data:stations": "node scripts/generate-stations.mjs",
     "data:medical": "node scripts/generate-medical.mjs",
