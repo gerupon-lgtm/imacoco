@@ -11,7 +11,7 @@ export default defineConfig({
     VitePWA({
       registerType: 'prompt',
       workbox: {
-        cacheId: `imakoko-info-${packageVersion}`,
+        cacheId: `imakoko-info-mvp-${packageVersion}`,
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         globIgnores: ['favicon.svg', 'icon-192.png', 'icon-512.png']
       },

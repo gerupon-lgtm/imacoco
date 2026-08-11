@@ -7,6 +7,10 @@
   --sunset-coral: #b33b13;
   --station-blue: #2b63ad;
   --health-green: #087a5d;
+  --interactive-link: #075f9f;
+  --primary-action-bg: #082f67;
+  --primary-action-fg: #ffffff;
+  --row-surface: rgba(255, 255, 255, 0.58);
   --icon-cloud-fill: #f7fbfd;
   --icon-cloud-stroke: #8ca3b6;
   --line: #d8e6ef;
@@ -17,6 +21,10 @@
 
 button {
   color: inherit;
+}
+
+a {
+  color: var(--interactive-link);
 }
 
 .app-shell {
@@ -566,14 +574,16 @@ button {
 
 .weather-details {
   display: grid;
-  grid-template-columns: repeat(2, minmax(90px, 1fr));
-  gap: 8px 14px;
+  grid-template-columns: repeat(4, minmax(48px, 1fr));
+  gap: 8px;
   margin: 0;
 }
 
 .weather-details div {
-  display: flex;
-  gap: 8px;
+  display: grid;
+  gap: 2px;
+  justify-items: center;
+  text-align: center;
 }
 
 .weather-details dt,
@@ -759,8 +769,8 @@ button {
   padding: 9px 15px;
   border: 0;
   border-radius: 9px;
-  background: var(--navy);
-  color: white;
+  background: var(--primary-action-bg);
+  color: var(--primary-action-fg);
   cursor: pointer;
   text-decoration: none;
   white-space: nowrap;
@@ -844,7 +854,7 @@ button {
   padding: 10px 12px;
   border: 1px solid var(--line);
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.58);
+  background: var(--row-surface);
 }
 
 .government-office > div {
@@ -943,8 +953,8 @@ button {
 }
 
 .pwa-update-banner button:last-child {
-  background: var(--navy);
-  color: white;
+  background: var(--primary-action-bg);
+  color: var(--primary-action-fg);
 }
 
 .primary-button .app-icon {
@@ -1090,7 +1100,7 @@ button {
 }
 
 .source-list a {
-  color: var(--blue);
+  color: var(--interactive-link);
 }
 
 .modal-note {
@@ -1222,7 +1232,7 @@ button {
   }
 
   .weather-details {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(4, minmax(48px, 1fr));
   }
 
   .station-row {
@@ -1346,6 +1356,26 @@ button {
     --shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
     --icon-cloud-fill: #d6e8f2;
     --icon-cloud-stroke: #84a5ba;
+    --interactive-link: #8cdcf4;
+    --primary-action-bg: #7ed5e8;
+    --primary-action-fg: #071a2a;
+    --row-surface: rgba(15, 49, 68, 0.92);
+  }
+
+  .info-card[data-card-id='tide'] {
+    --card-accent: #a7eff8;
+    --card-chip: rgba(167, 239, 248, 0.08);
+  }
+
+  .info-card[data-card-id='station'],
+  .info-card[data-card-id='government'] {
+    --card-accent: #b0d3ff;
+    --card-chip: rgba(176, 211, 255, 0.08);
+  }
+
+  .info-card[data-card-id='medical'] {
+    --card-accent: #89efcf;
+    --card-chip: rgba(137, 239, 207, 0.08);
   }
 
   .app-shell {
@@ -1359,6 +1389,10 @@ button {
   .list-row,
   .secondary-button {
     background: rgba(12, 37, 54, 0.78);
+  }
+
+  .government-office {
+    background: var(--row-surface);
   }
 }
 

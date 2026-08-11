@@ -2,10 +2,10 @@
 
 ## 1. 正典と状態
 
-- 要件IDの正典: ../要件定義書_いまここインフォ.md 版1.6
-- 本書の状態: MVP実装・ローカル総合検証完了。公開判断と実機確認待ち
+- 要件IDの正典: ../要件定義書_いまここインフォ.md 版1.7
+- 本書の状態: MVP実装・本番公開済み。修正はPRごとに実機確認
 - 実装AI: Codex。入口は../AGENTS.md
-- 現在版: iki-0.1.0
+- 現在版: mvp-0.1.0
 
 ## 2. トレーサビリティ表
 
@@ -71,7 +71,7 @@
 
 | ID | タスク | 対応要件 | 完了条件（要約） |
 |---|---|---|---|
-| T-001 | 雛形・CI・バージョン | FR-001、FR-015、NFR-P01、REQ-10.2 | React/Vite/PWAのbuildとテストが通り、iki-0.1.0が一致 |
+| T-001 | 雛形・CI・バージョン | FR-001、FR-015、NFR-P01、REQ-10.2 | React/Vite/PWAのbuildとテストが通り、mvp-0.1.0が一致 |
 | T-002 | 日時・距離・方角の共通処理 | FR-004、FR-006 | UTC保存、JST表示、毎分時計・JST日付切替、距離・8方位が境界テストを通る |
 | T-003 | IndexedDB・設定・期限 | FR-011、FR-014、NFR-P04、REQ-9.4 | 15分／24時間、最新1件、移行、全消去が動く |
 | T-004 | デザイン土台・カード状態 | FR-004、FR-010、REQ-9.5 | 小杉ゴシック、正式ヘッダー、同じ強調の日付・時計、確定カード順、全状態とライト／ダークを表示できる |
@@ -97,7 +97,7 @@
 ### T-001: 雛形・CI・バージョン
 
 - 依存: なし
-- 完了条件: Node 24 LTS、React、TypeScript、Vite、Vitest、Playwright、vite-plugin-pwaの雛形を作り、dev/build/typecheck/testが成功する。package.jsonを版の正典にし、iki-0.1.0をフッター用定数とキャッシュ名へ生成する。
+- 完了条件: Node 24 LTS、React、TypeScript、Vite、Vitest、Playwright、vite-plugin-pwaの雛形を作り、dev/build/typecheck/testが成功する。package.jsonを版の正典にし、mvp-0.1.0をフッター用定数とキャッシュ名へ生成する。
 - 検証方法:
   - 正常: npm run checkとnpm run buildが成功し、distが静的配信できる。
   - 異常: 版定数を意図的にずらすとcheck-versionが失敗する。

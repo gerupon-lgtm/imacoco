@@ -303,3 +303,94 @@ test('主要4幅・文字200%・ダーク・動き軽減でも主画面を操作
   await page.keyboard.press('Tab')
   await expect(page.locator(':focus')).toBeVisible()
 })
+
+test('ダークモードで主要カードのアイコンと操作文字を判読できる', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.emulateMedia({ colorScheme: 'dark' })
+  await page.goto('/?preview=1')
+  await page.evaluate(() => {
+    const fixture = document.createElement('section')
+    fixture.className = 'info-card contrast-test-fixture'
+    fixture.innerHTML = `
+      <div class="government-office"><div><strong>千代田区役所</strong></div></div>
+      <div class="medical-facility"><div><strong>テスト医院</strong></div><span class="medical-actions"><a href="#">地図</a></span></div>
+      <p class="medical-source-link"><a href="#">医療情報ネットで確認</a></p>
+    `
+    document.body.append(fixture)
+  })
+
+  const contrastRatios = await page.evaluate(() => {
+    type Rgb = { r: number; g: number; b: number; a: number }
+
+    const parseColor = (value: string): Rgb => {
+      const parts = value.match(/[\d.]+/g)?.map(Number) ?? []
+      return { r: parts[0] ?? 0, g: parts[1] ?? 0, b: parts[2] ?? 0, a: parts[3] ?? 1 }
+    }
+    const composite = (foreground: Rgb, background: Rgb): Rgb => ({
+      r: foreground.r * foreground.a + background.r * (1 - foreground.a),
+      g: foreground.g * foreground.a + background.g * (1 - foreground.a),
+      b: foreground.b * foreground.a + background.b * (1 - foreground.a),
+      a: 1
+    })
+    const paintedBackground = (element: Element): Rgb => {
+      const layers: Rgb[] = []
+      for (let current: Element | null = element; current; current = current.parentElement) {
+        const color = parseColor(getComputedStyle(current).backgroundColor)
+        if (color.a > 0) layers.push(color)
+      }
+      return layers.reverse().reduce((background, foreground) => composite(foreground, background), {
+        r: 7,
+        g: 26,
+        b: 42,
+        a: 1
+      })
+    }
+    const luminance = (color: Rgb) => {
+      const channels = [color.r, color.g, color.b].map((channel) => {
+        const normalized = channel / 255
+        return normalized <= 0.04045 ? normalized / 12.92 : ((normalized + 0.055) / 1.055) ** 2.4
+      })
+      return channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722
+    }
+    const ratio = (foreground: Rgb, background: Rgb) => {
+      const [lighter, darker] = [luminance(foreground), luminance(background)].sort((a, b) => b - a)
+      return (lighter + 0.05) / (darker + 0.05)
+    }
+    const contrastFor = (selector: string) => {
+      const element = document.querySelector(selector)
+      if (!element) throw new Error(`Missing contrast target: ${selector}`)
+      return ratio(parseColor(getComputedStyle(element).color), paintedBackground(element))
+    }
+
+    return {
+      tideIcon: contrastFor('[data-card-id="tide"] .card-icon'),
+      stationIcon: contrastFor('[data-card-id="station"] .card-icon'),
+      governmentIcon: contrastFor('[data-card-id="government"] .card-icon'),
+      medicalIcon: contrastFor('[data-card-id="medical"] .card-icon'),
+      stationMap: contrastFor('[data-card-id="station"] .primary-button'),
+      governmentName: contrastFor('.contrast-test-fixture .government-office strong'),
+      medicalMap: contrastFor('.contrast-test-fixture .medical-actions a:last-child'),
+      medicalSource: contrastFor('.contrast-test-fixture .medical-source-link a')
+    }
+  })
+
+  for (const [target, ratio] of Object.entries(contrastRatios)) {
+    expect.soft(ratio, `${target}: ${ratio.toFixed(2)}:1`).toBeGreaterThanOrEqual(4.5)
+  }
+
+  await page.locator('.contrast-test-fixture').evaluate((element) => element.remove())
+  await page.screenshot({ path: 'test-results/dashboard-mobile-dark.png', fullPage: true })
+})
+
+test('天気の補足値を一列に揃え、MVP版を表示する', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/?preview=1')
+
+  const valueTops = await page.locator('.weather-details dd').evaluateAll((values) =>
+    values.map((value) => Math.round(value.getBoundingClientRect().top))
+  )
+
+  expect(valueTops).toHaveLength(4)
+  expect.soft(Math.max(...valueTops) - Math.min(...valueTops)).toBeLessThanOrEqual(1)
+  await expect.soft(page.locator('.app-footer')).toContainText('mvp-0.1.0')
+})

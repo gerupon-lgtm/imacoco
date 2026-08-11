@@ -3,13 +3,13 @@
 ## 1. 現在地
 
 - GitHub: `https://github.com/gerupon-lgtm/imacoco`（公開）
-- 本番ブランチ候補: `main`
-- 実装ブランチ: `agent/add-dashboard-color`
-- PR: `#1`（ドラフト）
-- アプリ版: `iki-0.1.0`
-- 本番公開: 未実施
+- 本番ブランチ: `main`
+- 修正ブランチ: `fix/dark-mode-contrast-version`
+- 初回公開PR: `#1`（マージ済み）
+- アプリ版: `mvp-0.1.0`
+- 本番公開: `https://imacoco.sikumilab.com/`（Cloudflare Pages）
 
-公開前に利用者判断が必要なのは、公開ホスト名、名称の最終確認、PRマージ、CloudflareへのGitHub接続許可である。
+Cloudflare PagesのGitHub連携と独自ドメイン設定は完了済み。今後の修正はPRのCIとPreview確認後に`main`へマージする。
 
 ## 2. ローカル品質ゲート
 
@@ -68,7 +68,7 @@ Cloudflareの[Custom domains](https://developers.cloudflare.com/pages/configurat
 ロールバック後:
 
 1. 独自ドメインと`pages.dev`の両方を確認する。
-2. `iki-*`版と更新通知を確認する。
+2. `mvp-*`版と更新通知を確認する。
 3. 原因修正は新しいPRで行う。
 4. 静的データ不具合なら生成物とmanifestを同じコミット単位で戻す。
 
