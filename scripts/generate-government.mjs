@@ -15,6 +15,58 @@ const jlisMapPage = 'https://www.j-lis.go.jp/spd/map-search/cms_1069.html'
 const outputDirectory = resolve('public/data/government')
 const cacheDirectory = join(tmpdir(), 'imakoko-government-20260115')
 
+// J-LISの自治体マップで確認した都道府県公式ホームページ。
+// デジタル庁CSVはオープンデータページの一覧であり、県庁の「公式」導線には使わない。
+const prefectureOfficialUrls = {
+  '1': 'https://www.pref.hokkaido.lg.jp/',
+  '2': 'https://www.pref.aomori.lg.jp/',
+  '3': 'https://www.pref.iwate.jp/',
+  '4': 'https://www.pref.miyagi.jp/',
+  '5': 'https://www.pref.akita.lg.jp/',
+  '6': 'https://www.pref.yamagata.jp/',
+  '7': 'https://www.pref.fukushima.lg.jp/',
+  '8': 'https://www.pref.ibaraki.jp/',
+  '9': 'https://www.pref.tochigi.lg.jp/',
+  '10': 'https://www.pref.gunma.jp/',
+  '11': 'https://www.pref.saitama.lg.jp/',
+  '12': 'https://www.pref.chiba.lg.jp/',
+  '13': 'https://www.metro.tokyo.lg.jp/',
+  '14': 'https://www.pref.kanagawa.jp/',
+  '15': 'https://www.pref.niigata.lg.jp/',
+  '16': 'https://www.pref.toyama.jp/',
+  '17': 'https://www.pref.ishikawa.lg.jp/',
+  '18': 'https://www.pref.fukui.lg.jp/',
+  '19': 'https://www.pref.yamanashi.jp/',
+  '20': 'https://www.pref.nagano.lg.jp/',
+  '21': 'https://www.pref.gifu.lg.jp/',
+  '22': 'https://www.pref.shizuoka.jp/',
+  '23': 'https://www.pref.aichi.jp/',
+  '24': 'https://www.pref.mie.lg.jp/',
+  '25': 'https://www.pref.shiga.lg.jp/',
+  '26': 'https://www.pref.kyoto.jp/',
+  '27': 'https://www.pref.osaka.lg.jp/',
+  '28': 'https://web.pref.hyogo.lg.jp/',
+  '29': 'https://www.pref.nara.jp/',
+  '30': 'https://www.pref.wakayama.lg.jp/',
+  '31': 'https://www.pref.tottori.lg.jp/',
+  '32': 'https://www.pref.shimane.lg.jp/',
+  '33': 'https://www.pref.okayama.jp/',
+  '34': 'https://www.pref.hiroshima.lg.jp/',
+  '35': 'https://www.pref.yamaguchi.lg.jp/',
+  '36': 'https://www.pref.tokushima.lg.jp/',
+  '37': 'https://www.pref.kagawa.lg.jp/',
+  '38': 'https://www.pref.ehime.jp/',
+  '39': 'https://www.pref.kochi.lg.jp/',
+  '40': 'https://www.pref.fukuoka.lg.jp/',
+  '41': 'https://www.pref.saga.lg.jp/',
+  '42': 'https://www.pref.nagasaki.jp/',
+  '43': 'https://www.pref.kumamoto.jp/',
+  '44': 'https://www.pref.oita.jp/',
+  '45': 'https://www.pref.miyazaki.lg.jp/',
+  '46': 'https://www.pref.kagoshima.jp/',
+  '47': 'https://www.pref.okinawa.jp/'
+}
+
 function parseCsv(text) {
   const rows = []
   let row = []
@@ -128,6 +180,7 @@ async function main() {
     ].map(safeHttps).find(Boolean)
   }
   const officialUrl = (code, type) => {
+    if (type === 'prefectural') return prefectureOfficialUrls[normalizedCode(code)] || jlisMapPage
     const padded = paddedCode(code)
     const parentCode = `${padded.slice(0, 3)}00`
     const prefectureCode = `${padded.slice(0, 2)}000`

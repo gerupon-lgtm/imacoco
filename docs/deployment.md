@@ -6,7 +6,7 @@
 - 本番ブランチ: `main`
 - 修正ブランチ: 作業ごとのfeature／fixブランチからPRを作成
 - 初回公開PR: `#1`（マージ済み）
-- アプリ版: `mvp-0.1.0`
+- アプリ版: `mvp-0.1.1`
 - 本番公開: `https://imacoco.sikumilab.com/`（Cloudflare Pages）
 
 Cloudflare PagesのGitHub連携と独自ドメイン設定は完了済み。今後の修正はPRのCIとPreview確認後に`main`へマージする。
@@ -19,7 +19,7 @@ npm.cmd run check
 npm.cmd run test:e2e
 ```
 
-`check`は版整合、全国データ全件検査、型、単体・結合テスト、本番ビルドを行う。E2EはGPS許可、実データカード、保存データ全消去、画面順・装飾、前回位置復元、iOS／Android／PCのインストール案内条件を確認する。
+`check`は版整合、全国データ全件検査、型、単体・結合テスト、本番ビルド、生成済みPWA manifestの正式名称を検査する。E2EはGPS許可、実データカード、保存データ全消去、画面順・装飾、前回位置復元、iOS／Android／PCのインストール案内条件、ライト／ダークの更新通知コントラストを確認する。
 
 ## 3. Cloudflare Pages Preview
 

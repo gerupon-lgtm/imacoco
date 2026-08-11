@@ -78,15 +78,27 @@ assert(Array.isArray(offices) && offices.length === governmentManifest.recordCou
 const officeIds = new Set()
 const localOfficeCodes = new Set()
 let prefecturalOfficeCount = 0
+const prefecturalOffices = []
 for (const office of offices) {
   assert(typeof office.id === 'string' && !officeIds.has(office.id), `役所ID ${office.id} が不正または重複しています`)
   officeIds.add(office.id)
   validateCoordinates(office.coordinates, `役所 ${office.id}`)
   assert(/^https:\/\//.test(office.officialUrl), `役所 ${office.id}: 公式確認先がHTTPSではありません`)
-  if (office.officeType === 'prefectural') prefecturalOfficeCount += 1
+  if (office.officeType === 'prefectural') {
+    prefecturalOfficeCount += 1
+    prefecturalOffices.push(office)
+  }
   else localOfficeCodes.add(office.municipalityCode)
 }
 assert(prefecturalOfficeCount === 47, `都道府県庁が47件ではありません: ${prefecturalOfficeCount}`)
+assert(
+  prefecturalOffices.every((office) => !office.officialUrl.includes('j-lis.go.jp')),
+  `都道府県庁の公式リンクがJ-LISへフォールバックしています: ${prefecturalOffices.filter((office) => office.officialUrl.includes('j-lis.go.jp')).map((office) => office.name).join(', ')}`
+)
+assert(
+  prefecturalOffices.find((office) => office.municipalityCode === '24')?.officialUrl === 'https://www.pref.mie.lg.jp/',
+  '三重県庁の公式リンクが三重県公式サイトではありません'
+)
 assert(localOfficeCodes.size === governmentManifest.localOfficeCount, '役所データの自治体コード数がmanifestと一致しません')
 
 const missingCodes = Object.keys(municipalityMaster.records).filter((code) => !localOfficeCodes.has(code)).sort()
