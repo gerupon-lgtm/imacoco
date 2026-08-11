@@ -169,7 +169,7 @@ describe('現在地ダッシュボード', () => {
 
     expect(await screen.findByText('東京都千代田区 丸の内一丁目')).toBeVisible()
     expect(screen.getByText('標高 約10m（概算）')).toBeVisible()
-    expect(screen.getByText('24.6℃')).toBeVisible()
+    expect(screen.getByLabelText('現在気温 24.6℃')).toBeVisible()
     expect(screen.getByText('晴れ時々くもり')).toBeVisible()
     expect(screen.getByText('5:02')).toBeVisible()
     expect(screen.getByText('18:27')).toBeVisible()
@@ -194,7 +194,7 @@ describe('現在地ダッシュボード', () => {
     await user.click(screen.getByRole('button', { name: '現在地で表示' }))
 
     expect(await screen.findByText('地名を取得できませんでした')).toBeVisible()
-    expect(screen.getByText('24.6℃')).toBeVisible()
+    expect(screen.getByLabelText('現在気温 24.6℃')).toBeVisible()
     expect(screen.getByText('標高 約10m（概算）')).toBeVisible()
     expect(screen.getByRole('button', { name: '地名を再試行' })).toBeVisible()
     expect(fetchPlace).toHaveBeenCalledTimes(2)

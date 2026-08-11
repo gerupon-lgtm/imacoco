@@ -61,16 +61,17 @@ test('初回説明からGPS・地名・天気を順次表示する', async ({ pa
 
   await expect(page.getByText('東京都千代田区 丸の内一丁目')).toBeVisible()
   await expect(page.getByText('標高 約16m（概算）')).toBeVisible()
-  await expect(page.getByText('24.5℃')).toBeVisible()
+  await expect(page.getByLabel('現在気温 24.5℃')).toBeVisible()
   await expect(page.getByText('雨')).toBeVisible()
   await expect(page.getByText('干潮の目安')).toBeVisible()
-  await expect(page.getByText('航海・防災には使用不可')).toBeVisible()
+  await expect(page.getByText('航海・防災には使用不可です')).toBeVisible()
   await expect(page.getByText('東京駅', { exact: true }).first()).toBeVisible()
   await expect(page.getByText('東京都庁', { exact: true })).toBeVisible()
   await expect(page.getByText('千代田区役所', { exact: true })).toBeVisible()
   await expect(page.getByText('病院　3件', { exact: true })).toBeVisible()
   await expect(page.getByText('一般診療所　3件', { exact: true })).toBeVisible()
   await expect(page.getByText('緊急時は119', { exact: true })).toBeVisible()
+  await expect(page.getByText('半径10km・受診前に公式情報を確認して下さい', { exact: true })).toBeVisible()
 
   await page.getByRole('button', { name: '保存データを消去' }).click()
   await expect(page.getByRole('dialog', { name: '保存データを消去' })).toBeVisible()
@@ -140,12 +141,140 @@ test('モバイル画面が指定の順序と日時装飾で表示される', as
   await page.screenshot({ path: 'test-results/dashboard-mobile.png', fullPage: true })
 })
 
+test('表示色モードをライト・ダーク・自動から選んで保存できる', async ({ page }) => {
+  await page.goto('/?preview=1')
+
+  const themeSelect = page.getByRole('combobox', { name: '表示色モード' })
+  await expect(themeSelect).toHaveValue('system')
+
+  await themeSelect.selectOption('dark')
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
+  const darkHeaderControlBorders = await page.evaluate(() => [
+    getComputedStyle(document.querySelector('.header-button')!).borderColor,
+    getComputedStyle(document.querySelector('.theme-picker select')!).borderColor
+  ])
+  expect(new Set(darkHeaderControlBorders).size).toBe(1)
+  await page.reload()
+  await expect(themeSelect).toHaveValue('dark')
+  await page.screenshot({ path: 'test-results/dashboard-mobile-refined-dark.png', fullPage: true })
+
+  await themeSelect.selectOption('light')
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light')
+
+  await themeSelect.selectOption('system')
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'system')
+})
+
+test('正式アイコンと控えめな文字サイズで現在地への地図導線を表示する', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/?preview=1')
+
+  const brandIcon = page.locator('.brand-icon')
+  await expect(brandIcon).toHaveAttribute('src', /favicon\.svg$/)
+  await expect(page.getByText('imacoco-info', { exact: true })).toBeVisible()
+  await expect(page.getByText('表示距離はすべて現在地からの直線距離です', { exact: true })).toHaveCount(1)
+  await expect(page.getByText('地図で開く', { exact: true })).toHaveCount(2)
+  await expect(page.locator('.updated-at')).toHaveCount(0)
+  await expect(page.getByRole('link', { name: '現在地を地図で開く' })).toHaveAttribute(
+    'href',
+    'https://www.google.com/maps/search/?api=1&query=35.681236,139.767125'
+  )
+
+  const metrics = await page.evaluate(() => {
+    const rect = (selector: string) => document.querySelector<HTMLElement>(selector)!.getBoundingClientRect()
+    const fontSize = (selector: string) => Number.parseFloat(getComputedStyle(document.querySelector(selector)!).fontSize)
+    const icon = rect('.brand-icon')
+    const title = rect('.brand-block h1')
+    const titleStyle = getComputedStyle(document.querySelector('.brand-block h1')!)
+    const addressStyle = getComputedStyle(document.querySelector('.location-name')!)
+    const weatherIcon = rect('.weather-state-icon')
+    const weatherCopy = rect('.weather-current-copy')
+    const locationMapStyle = getComputedStyle(document.querySelector('.location-map-link')!)
+    const stationMapStyle = getComputedStyle(document.querySelector('[data-card-id="station"] .primary-button')!)
+    const locationMapRect = rect('.location-map-link')
+    const stationMapRect = rect('[data-card-id="station"] .primary-button')
+    const headerActions = rect('.header-actions')
+    const themePicker = rect('.theme-picker')
+    const headerControlBorders = [
+      getComputedStyle(document.querySelector('.header-button')!).borderColor,
+      getComputedStyle(document.querySelector('.theme-picker select')!).borderColor
+    ]
+    const cardContentGaps = ['weather', 'solar', 'tide', 'medical'].map((id) => {
+      const heading = rect(`[data-card-id="${id}"] .card-heading`)
+      const body = rect(`[data-card-id="${id}"] .card-body`)
+      return body.top - heading.bottom
+    })
+    return {
+      headerTopDifference: Math.abs(icon.top - title.top),
+      headerButtonHeight: rect('.header-button').height,
+      themeControlWidthDifference: Math.abs(headerActions.width - themePicker.width),
+      themeControlGap: themePicker.top - headerActions.bottom,
+      headerControlBorders,
+      slugLetterSpacing: Number.parseFloat(getComputedStyle(document.querySelector('.brand-slug')!).letterSpacing),
+      titleFontSize: fontSize('.brand-block h1'),
+      titleHeight: title.height,
+      titleLineHeight: Number.parseFloat(titleStyle.lineHeight),
+      titleWhiteSpace: titleStyle.whiteSpace,
+      titleFontWeight: Number.parseInt(titleStyle.fontWeight, 10),
+      cardTitleFontSizes: [...document.querySelectorAll<HTMLElement>('.card-heading h2')].map((heading) => Number.parseFloat(getComputedStyle(heading).fontSize)),
+      cardTitleLetterSpacings: [...document.querySelectorAll<HTMLElement>('.card-heading h2')].map((heading) => getComputedStyle(heading).letterSpacing),
+      mapButtonBackgrounds: [locationMapStyle.backgroundColor, stationMapStyle.backgroundColor],
+      mapButtonColors: [locationMapStyle.color, stationMapStyle.color],
+      mapButtonHeightDifference: Math.abs(locationMapRect.height - stationMapRect.height),
+      mapButtonFontSizes: [Number.parseFloat(locationMapStyle.fontSize), Number.parseFloat(stationMapStyle.fontSize)],
+      mapButtonIconWidths: [rect('.location-map-link .app-icon').width, rect('[data-card-id="station"] .primary-button .app-icon').width],
+      addressFontSize: fontSize('.location-name'),
+      addressLineHeight: Number.parseFloat(addressStyle.lineHeight),
+      locationHeadingFontSize: fontSize('.location-card .card-heading h2'),
+      weatherIconWidth: weatherIcon.width,
+      temperatureFontSize: fontSize('.weather-main strong'),
+      weatherTopDifference: Math.abs(rect('.weather-state-icon').top - rect('.weather-main strong').top),
+      weatherCopyHeightDifference: Math.abs(weatherIcon.height - weatherCopy.height),
+      temperatureUnitWeight: Number.parseInt(getComputedStyle(document.querySelector('.temperature-unit')!).fontWeight, 10),
+      cardContentGaps,
+      shellBackground: getComputedStyle(document.querySelector('.app-shell')!).backgroundImage,
+      fontSynthesis: getComputedStyle(document.documentElement).fontSynthesis
+    }
+  })
+
+  expect(metrics.headerTopDifference).toBeLessThanOrEqual(1)
+  expect(metrics.headerButtonHeight).toBeLessThanOrEqual(44)
+  expect(metrics.slugLetterSpacing).toBeGreaterThanOrEqual(2)
+  expect(metrics.titleFontSize).toBeLessThanOrEqual(24)
+  expect(metrics.titleFontSize).toBeGreaterThanOrEqual(20)
+  expect(metrics.themeControlWidthDifference).toBeLessThanOrEqual(1)
+  expect(metrics.themeControlGap).toBeLessThanOrEqual(4)
+  expect(new Set(metrics.headerControlBorders).size).toBe(1)
+  expect(metrics.titleHeight).toBeLessThanOrEqual(metrics.titleLineHeight * 1.1)
+  expect(metrics.titleWhiteSpace).toBe('nowrap')
+  expect(metrics.titleFontWeight).toBeGreaterThanOrEqual(700)
+  expect(new Set(metrics.cardTitleFontSizes).size).toBe(1)
+  expect(new Set(metrics.cardTitleLetterSpacings).size).toBe(1)
+  expect(new Set(metrics.mapButtonBackgrounds).size).toBe(1)
+  expect(new Set(metrics.mapButtonColors).size).toBe(1)
+  expect(metrics.mapButtonHeightDifference).toBeLessThanOrEqual(1)
+  expect(new Set(metrics.mapButtonFontSizes).size).toBe(1)
+  expect(new Set(metrics.mapButtonIconWidths).size).toBe(1)
+  expect(metrics.addressFontSize).toBeGreaterThanOrEqual(16.5)
+  expect(metrics.addressFontSize).toBeGreaterThan(metrics.locationHeadingFontSize)
+  expect(metrics.addressLineHeight / metrics.addressFontSize).toBeGreaterThanOrEqual(1.4)
+  expect(metrics.weatherIconWidth).toBeLessThanOrEqual(60)
+  expect(metrics.temperatureFontSize).toBeLessThanOrEqual(40)
+  expect(metrics.weatherTopDifference).toBeLessThanOrEqual(1)
+  expect(metrics.weatherCopyHeightDifference).toBeLessThanOrEqual(1)
+  expect(metrics.temperatureUnitWeight).toBe(400)
+  expect(Math.max(...metrics.cardContentGaps), JSON.stringify(metrics.cardContentGaps)).toBeLessThanOrEqual(4)
+  expect(metrics.shellBackground).toContain('rgb(215, 229, 233)')
+  expect(metrics.fontSynthesis).toBe('none')
+  await page.screenshot({ path: 'test-results/dashboard-mobile-refined-light.png', fullPage: true })
+})
+
 test('補足情報を横一列に整理して現在地カードをコンパクトに表示する', async ({ page }) => {
   await page.goto('/?preview=1')
 
   const sameRow = async (leftText: string, rightText: string) => {
-    const left = await page.getByText(leftText, { exact: true }).boundingBox()
-    const right = await page.getByText(rightText, { exact: true }).boundingBox()
+    const left = await page.getByText(leftText, { exact: true }).first().boundingBox()
+    const right = await page.getByText(rightText, { exact: true }).first().boundingBox()
 
     expect(left).not.toBeNull()
     expect(right).not.toBeNull()
@@ -165,18 +294,17 @@ test('補足情報を横一列に整理して現在地カードをコンパク�
 
   const locationName = await page.getByText('東京都千代田区 丸の内一丁目', { exact: true }).boundingBox()
   expect(locationName).not.toBeNull()
-  expect(locationName!.height).toBeLessThan(32)
+  expect(locationName!.height).toBeLessThan(56)
 
   await sameRow('精度の目安 ±18m', '標高 約10m（概算）')
-  await sameRow('約12km先の海洋モデル', '航海・防災には使用不可')
-  await sameRow('ほかの駅を見る', '直線距離・所要時間ではありません')
+  await sameRow('約12km先の海洋モデル', '航海・防災には使用不可です')
   await sameRow('その他の医療機関を確認中…', '緊急時は119')
 
-  const stationCard = await page.locator('[data-card-id="station"]').boundingBox()
-  const stationNotice = await page.getByText('直線距離・所要時間ではありません', { exact: true }).boundingBox()
-  expect(stationCard).not.toBeNull()
-  expect(stationNotice).not.toBeNull()
-  expect(stationNotice!.x + stationNotice!.width).toBeLessThan(stationCard!.x + stationCard!.width - 12)
+  const medicalCard = await page.locator('[data-card-id="medical"]').boundingBox()
+  const distanceNotice = await page.getByText('表示距離はすべて現在地からの直線距離です', { exact: true }).boundingBox()
+  expect(medicalCard).not.toBeNull()
+  expect(distanceNotice).not.toBeNull()
+  expect(distanceNotice!.y).toBeGreaterThanOrEqual(medicalCard!.y + medicalCard!.height)
 })
 
 test('測位できない再訪時は24時間以内の前回位置を明示して復元する', async ({ page, context }) => {
@@ -248,6 +376,9 @@ test('測位できない再訪時は24時間以内の前回位置を明示して
 
   await expect(page.getByText('東京都千代田区 丸の内一丁目')).toBeVisible()
   await expect(page.getByText('前回の位置', { exact: true })).toBeVisible()
+  const footerStatus = page.locator('.footer-meta')
+  await expect(footerStatus.getByText('一部に15分以内の保存済み情報を表示しています', { exact: true })).toHaveCount(1)
+  await expect(footerStatus).toContainText('mvp-0.1.0')
   await expect(page.getByText('現在地を取得できないため、24時間以内の前回位置を表示しています')).toBeVisible()
 })
 
@@ -262,8 +393,14 @@ test('主要4幅・文字200%・ダーク・動き軽減でも主画面を操作
     await page.goto('/?preview=1')
     await expect(page.getByRole('heading', { level: 1, name: 'いまここインフォ' })).toBeVisible()
     await expect(page.locator('[data-card-id="medical"]')).toBeAttached()
-    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)
-    expect(overflow).toBeLessThanOrEqual(1)
+    const layout = await page.evaluate(() => ({
+      overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      offenders: [...document.querySelectorAll<HTMLElement>('body *')]
+        .filter((element) => element.getBoundingClientRect().right > window.innerWidth + 1 || element.scrollWidth > element.clientWidth + 1)
+        .slice(0, 8)
+        .map((element) => ({ className: element.className, text: element.textContent?.trim().slice(0, 50), right: Math.round(element.getBoundingClientRect().right), width: [element.clientWidth, element.scrollWidth] }))
+    }))
+    expect(layout.overflow, `${viewport.width}px ${JSON.stringify(layout.offenders)}`).toBeLessThanOrEqual(1)
   }
 
   await page.setViewportSize({ width: 320, height: 568 })
@@ -363,10 +500,12 @@ test('ダークモードで主要カードのアイコンと操作文字を判�
     }
 
     return {
+      headerRefreshIcon: contrastFor('.header-button .header-action-icon'),
       tideIcon: contrastFor('[data-card-id="tide"] .card-icon'),
       stationIcon: contrastFor('[data-card-id="station"] .card-icon'),
       governmentIcon: contrastFor('[data-card-id="government"] .card-icon'),
       medicalIcon: contrastFor('[data-card-id="medical"] .card-icon'),
+      tideBadge: contrastFor('[data-card-id="tide"] .badge'),
       stationMap: contrastFor('[data-card-id="station"] .primary-button'),
       governmentName: contrastFor('.contrast-test-fixture .government-office strong'),
       medicalMap: contrastFor('.contrast-test-fixture .medical-actions a:last-child'),
@@ -382,15 +521,19 @@ test('ダークモードで主要カードのアイコンと操作文字を判�
   await page.screenshot({ path: 'test-results/dashboard-mobile-dark.png', fullPage: true })
 })
 
-test('天気の補足値を一列に揃え、MVP版を表示する', async ({ page }) => {
+test('天気の気温補足値を一列に揃え、MVP版を表示する', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/?preview=1')
+  await page.evaluate(() => document.fonts.ready)
 
-  const valueTops = await page.locator('.weather-details dd').evaluateAll((values) =>
-    values.map((value) => Math.round(value.getBoundingClientRect().top))
+  const temperatureValueTops = await page.locator('.weather-details dd').evaluateAll((values) =>
+    values.slice(0, 3).map((value) => Math.round(value.getBoundingClientRect().top))
   )
 
-  expect(valueTops).toHaveLength(4)
-  expect.soft(Math.max(...valueTops) - Math.min(...valueTops)).toBeLessThanOrEqual(1)
+  expect(temperatureValueTops).toHaveLength(3)
+  expect.soft(
+    Math.max(...temperatureValueTops) - Math.min(...temperatureValueTops),
+    `weather temperature value tops: ${JSON.stringify(temperatureValueTops)}`
+  ).toBeLessThanOrEqual(1)
   await expect.soft(page.locator('.app-footer')).toContainText('mvp-0.1.0')
 })

@@ -8,9 +8,9 @@
 
 :root {
   color: #0a2d60;
-  background: #f4fbff;
+  background: #dbe7ea;
   font-family: 'Kosugi', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', Meiryo, sans-serif;
-  font-synthesis: weight;
+  font-synthesis: none;
   text-rendering: optimizeLegibility;
 }
 
@@ -20,7 +20,7 @@
 
 html {
   min-width: 320px;
-  background: #f4fbff;
+  background: #dbe7ea;
 }
 
 body {
@@ -41,10 +41,8 @@ summary:focus-visible {
   outline-offset: 3px;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root,
-  html {
-    color: #e7f7ff;
-    background: #071a2a;
-  }
+:root[data-color-mode='dark'],
+html[data-color-mode='dark'] {
+  color: #e7f7ff;
+  background: #071a2a;
 }
