@@ -1,0 +1,50 @@
+@font-face {
+  font-family: 'Kosugi';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url('@fontsource/kosugi/files/kosugi-japanese-400-normal.woff2') format('woff2');
+}
+
+:root {
+  color: #0a2d60;
+  background: #f4fbff;
+  font-family: 'Kosugi', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', Meiryo, sans-serif;
+  font-synthesis: weight;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-width: 320px;
+  background: #f4fbff;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+}
+
+button,
+a {
+  font: inherit;
+}
+
+button:focus-visible,
+a:focus-visible,
+summary:focus-visible {
+  outline: 3px solid #f7b500;
+  outline-offset: 3px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root,
+  html {
+    color: #e7f7ff;
+    background: #071a2a;
+  }
+}
