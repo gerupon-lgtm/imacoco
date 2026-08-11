@@ -1,15 +1,19 @@
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 import { defineConfig } from 'vitest/config'
+import { readFileSync } from 'node:fs'
+
+const packageVersion = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')).version as string
 
 export default defineConfig({
   plugins: [
     react(),
     VitePWA({
       registerType: 'prompt',
-      includeAssets: ['favicon.svg'],
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}']
+        cacheId: `imakoko-info-${packageVersion}`,
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        globIgnores: ['favicon.svg', 'icon-192.png', 'icon-512.png']
       },
       manifest: {
         name: 'いまここインフォ',
@@ -19,13 +23,25 @@ export default defineConfig({
         start_url: '.',
         display: 'standalone',
         background_color: '#f4fbff',
-        theme_color: '#0d7fa4',
+        theme_color: '#0B74B8',
         icons: [
           {
             src: 'favicon.svg',
             sizes: 'any',
             type: 'image/svg+xml',
             purpose: 'any'
+          },
+          {
+            src: 'icon-192.png',
+            sizes: '192x192',
+            type: 'image/png',
+            purpose: 'any'
+          },
+          {
+            src: 'icon-512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'any maskable'
           }
         ]
       }

@@ -3,6 +3,9 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
+  "engines": {
+    "node": ">=24 <25"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
@@ -10,7 +13,14 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "check": "npm run typecheck && npm test && npm run build"
+    "data:municipalities": "node scripts/generate-gsi-municipalities.mjs",
+    "data:stations": "node scripts/generate-stations.mjs",
+    "data:medical": "node scripts/generate-medical.mjs",
+    "data:government": "node scripts/generate-government.mjs",
+    "data:validate": "node scripts/validate-static-data.mjs",
+    "version:check": "node scripts/check-version.mjs",
+    "security:check": "node scripts/check-security.mjs",
+    "check": "npm run version:check && npm run security:check && npm run data:validate && npm run typecheck && npm test && npm run build"
   },
   "dependencies": {
     "@fontsource/kosugi": "^5.3.0",
@@ -28,6 +38,7 @@
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
     "@vitejs/plugin-react": "^5.1.4",
+    "fflate": "^0.8.2",
     "jsdom": "^30.0.1",
     "typescript": "^5.9.3",
     "vite": "^7.3.6",

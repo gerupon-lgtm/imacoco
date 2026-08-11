@@ -1,0 +1,7 @@
+/*
+  X-Robots-Tag: noindex, nofollow, noarchive
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self' https://api.open-meteo.com https://marine-api.open-meteo.com https://mreversegeocoder.gsi.go.jp; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
+  Referrer-Policy: no-referrer
+  Permissions-Policy: geolocation=(self), camera=(), microphone=(), payment=()
+  X-Content-Type-Options: nosniff
+  Cross-Origin-Opener-Policy: same-origin
