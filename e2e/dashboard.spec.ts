@@ -70,7 +70,7 @@ test('初回説明からGPS・地名・天気を順次表示する', async ({ pa
   await expect(page.getByText('千代田区役所', { exact: true })).toBeVisible()
   await expect(page.getByText('病院　3件', { exact: true })).toBeVisible()
   await expect(page.getByText('一般診療所　3件', { exact: true })).toBeVisible()
-  await expect(page.getByText('緊急時は119', { exact: true })).toBeVisible()
+  await expect(page.getByText('緊急時は119へ', { exact: true })).toBeVisible()
   await expect(page.getByText('半径10km・受診前に公式情報を確認して下さい', { exact: true })).toBeVisible()
 
   await page.getByRole('button', { name: '保存データを消去' }).click()
@@ -173,7 +173,8 @@ test('正式アイコンと控えめな文字サイズで現在地への地図�
   await expect(brandIcon).toHaveAttribute('src', /favicon\.svg$/)
   await expect(page.getByText('imacoco-info', { exact: true })).toBeVisible()
   await expect(page.getByText('表示距離はすべて現在地からの直線距離です', { exact: true })).toHaveCount(1)
-  await expect(page.getByText('地図で開く', { exact: true })).toHaveCount(2)
+  await expect(page.getByText('地図', { exact: true })).toHaveCount(2)
+  await expect(page.getByText('地図で開く', { exact: true })).toHaveCount(0)
   await expect(page.locator('.updated-at')).toHaveCount(0)
   await expect(page.getByRole('link', { name: '現在地を地図で開く' })).toHaveAttribute(
     'href',
@@ -204,6 +205,20 @@ test('正式アイコンと控えめな文字サイズで現在地への地図�
       const body = rect(`[data-card-id="${id}"] .card-body`)
       return body.top - heading.bottom
     })
+    const cardHeadingTopGaps = [...document.querySelectorAll<HTMLElement>('.info-card')].map((card) => {
+      const heading = card.querySelector<HTMLElement>('.card-heading')!
+      return heading.getBoundingClientRect().top - card.getBoundingClientRect().top
+    })
+    const annotationStyles = [
+      '[data-card-id="tide"] .meta-line',
+      '[data-card-id="tide"] .danger-line',
+      '[data-card-id="medical"] .meta-line',
+      '[data-card-id="medical"] .danger-line',
+      '.dashboard-distance-note'
+    ].map((selector) => {
+      const style = getComputedStyle(document.querySelector(selector)!)
+      return { fontSize: style.fontSize, lineHeight: style.lineHeight }
+    })
     return {
       headerTopDifference: Math.abs(icon.top - title.top),
       headerButtonHeight: rect('.header-button').height,
@@ -226,12 +241,18 @@ test('正式アイコンと控えめな文字サイズで現在地への地図�
       addressFontSize: fontSize('.location-name'),
       addressLineHeight: Number.parseFloat(addressStyle.lineHeight),
       locationHeadingFontSize: fontSize('.location-card .card-heading h2'),
+      locationPinWidth: rect('.location-pin').width,
+      locationPinMarkWidth: rect('.location-pin .pin-mark').width,
+      locationPinBackground: getComputedStyle(document.querySelector('.location-pin')!).backgroundColor,
+      cardTitleIconWidth: rect('.card-icon').width,
       weatherIconWidth: weatherIcon.width,
       temperatureFontSize: fontSize('.weather-main strong'),
       weatherTopDifference: Math.abs(rect('.weather-state-icon').top - rect('.weather-main strong').top),
       weatherCopyHeightDifference: Math.abs(weatherIcon.height - weatherCopy.height),
       temperatureUnitWeight: Number.parseInt(getComputedStyle(document.querySelector('.temperature-unit')!).fontWeight, 10),
       cardContentGaps,
+      cardHeadingTopGaps,
+      annotationStyles,
       shellBackground: getComputedStyle(document.querySelector('.app-shell')!).backgroundImage,
       fontSynthesis: getComputedStyle(document.documentElement).fontSynthesis
     }
@@ -239,7 +260,7 @@ test('正式アイコンと控えめな文字サイズで現在地への地図�
 
   expect(metrics.headerTopDifference).toBeLessThanOrEqual(1)
   expect(metrics.headerButtonHeight).toBeLessThanOrEqual(44)
-  expect(metrics.slugLetterSpacing).toBeGreaterThanOrEqual(2)
+  expect(metrics.slugLetterSpacing).toBeGreaterThanOrEqual(2.6)
   expect(metrics.titleFontSize).toBeLessThanOrEqual(24)
   expect(metrics.titleFontSize).toBeGreaterThanOrEqual(20)
   expect(metrics.themeControlWidthDifference).toBeLessThanOrEqual(1)
@@ -254,19 +275,46 @@ test('正式アイコンと控えめな文字サイズで現在地への地図�
   expect(new Set(metrics.mapButtonColors).size).toBe(1)
   expect(metrics.mapButtonHeightDifference).toBeLessThanOrEqual(1)
   expect(new Set(metrics.mapButtonFontSizes).size).toBe(1)
+  expect(metrics.mapButtonFontSizes[0]).toBe(16)
   expect(new Set(metrics.mapButtonIconWidths).size).toBe(1)
   expect(metrics.addressFontSize).toBeGreaterThanOrEqual(16.5)
   expect(metrics.addressFontSize).toBeGreaterThan(metrics.locationHeadingFontSize)
   expect(metrics.addressLineHeight / metrics.addressFontSize).toBeGreaterThanOrEqual(1.4)
+  expect(metrics.locationPinWidth).toBeLessThanOrEqual(48)
+  expect(metrics.locationPinMarkWidth).toBeLessThanOrEqual(26)
+  expect(metrics.locationPinBackground).toBe('rgba(0, 0, 0, 0)')
+  expect(Math.abs(metrics.locationPinWidth - metrics.locationPinMarkWidth)).toBeLessThanOrEqual(1)
+  expect(metrics.cardTitleIconWidth).toBe(30)
   expect(metrics.weatherIconWidth).toBeLessThanOrEqual(60)
   expect(metrics.temperatureFontSize).toBeLessThanOrEqual(40)
   expect(metrics.weatherTopDifference).toBeLessThanOrEqual(1)
   expect(metrics.weatherCopyHeightDifference).toBeLessThanOrEqual(1)
   expect(metrics.temperatureUnitWeight).toBe(400)
   expect(Math.max(...metrics.cardContentGaps), JSON.stringify(metrics.cardContentGaps)).toBeLessThanOrEqual(4)
-  expect(metrics.shellBackground).toContain('rgb(215, 229, 233)')
+  expect(Math.max(...metrics.cardHeadingTopGaps), JSON.stringify(metrics.cardHeadingTopGaps)).toBeLessThanOrEqual(12)
+  expect(new Set(metrics.annotationStyles.map(({ fontSize }) => fontSize)).size).toBe(1)
+  expect(new Set(metrics.annotationStyles.map(({ lineHeight }) => lineHeight)).size).toBe(1)
+  expect(metrics.shellBackground).toContain('rgb(226, 238, 241)')
   expect(metrics.fontSynthesis).toBe('none')
   await page.screenshot({ path: 'test-results/dashboard-mobile-refined-light.png', fullPage: true })
+})
+
+test('住所ピンをPCとスマホの両方で住所側に寄せる', async ({ page }) => {
+  for (const { width, maximumGap } of [
+    { width: 390, maximumGap: 10 },
+    { width: 900, maximumGap: 12 }
+  ]) {
+    await page.setViewportSize({ width, height: 900 })
+    await page.goto('/?preview=1')
+
+    const gap = await page.evaluate(() => {
+      const pin = document.querySelector('.location-pin')!.getBoundingClientRect()
+      const address = document.querySelector('.location-name-row')!.getBoundingClientRect()
+      return address.left - pin.right
+    })
+
+    expect(gap, `${width}px`).toBeLessThanOrEqual(maximumGap)
+  }
 })
 
 test('補足情報を横一列に整理して現在地カードをコンパクトに表示する', async ({ page }) => {
@@ -298,7 +346,7 @@ test('補足情報を横一列に整理して現在地カードをコンパク�
 
   await sameRow('精度の目安 ±18m', '標高 約10m（概算）')
   await sameRow('約12km先の海洋モデル', '航海・防災には使用不可です')
-  await sameRow('その他の医療機関を確認中…', '緊急時は119')
+  await sameRow('その他の医療機関を確認中…', '緊急時は119へ')
 
   const medicalCard = await page.locator('[data-card-id="medical"]').boundingBox()
   const distanceNotice = await page.getByText('表示距離はすべて現在地からの直線距離です', { exact: true }).boundingBox()

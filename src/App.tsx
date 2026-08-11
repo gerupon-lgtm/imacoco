@@ -250,7 +250,7 @@ function PreviewDashboard() {
                 target="_blank"
                 rel="noreferrer"
                 aria-label="現在地を地図で開く"
-              ><AppIcon name="map" />地図で開く</a>
+              ><AppIcon name="map" />地図</a>
             </div>
             <p className="location-facts">
               <span>精度の目安 ±18m</span>
@@ -304,7 +304,7 @@ function PreviewDashboard() {
             <p><strong>東京駅</strong> <span className="meta-inline">約200m 北東</span></p>
             <p className="tags"><span>JR</span><span>東京メトロ</span><span className="plain-tag">複数路線</span></p>
           </div>
-          <button type="button" className="primary-button map-action-button"><AppIcon name="map" />地図で開く</button>
+          <button type="button" className="primary-button map-action-button"><AppIcon name="map" />地図</button>
         </div>
         <div className="station-note">
           <details className="inline-details"><summary>ほかの駅を見る</summary></details>
@@ -322,7 +322,7 @@ function PreviewDashboard() {
         <div className="loading-bars" aria-label="その他の医療機関を確認中"><i /><i /><i /><i /></div>
         <div className="support-line medical-note">
           <p className="meta-line">その他の医療機関を確認中…</p>
-          <p className="danger-line">緊急時は119</p>
+          <p className="danger-line">緊急時は119へ</p>
         </div>
       </DashboardCard>
       <p className="dashboard-distance-note">表示距離はすべて現在地からの直線距離です</p>
@@ -486,7 +486,7 @@ function LiveDashboard({
                   target="_blank"
                   rel="noreferrer"
                   aria-label="現在地を地図で開く"
-                ><AppIcon name="map" />地図で開く</a>
+                ><AppIcon name="map" />地図</a>
               </div>
               <p className="location-facts">
                 <span>精度の目安 ±{Math.round(locationState.fix.accuracyMeters)}m</span>
@@ -632,7 +632,7 @@ function LiveDashboard({
                 href={`https://www.google.com/maps/search/?api=1&query=${stationState.data.stations[0].coordinates.latitude},${stationState.data.stations[0].coordinates.longitude}`}
                 target="_blank"
                 rel="noreferrer"
-              ><AppIcon name="map" />地図で開く</a>
+              ><AppIcon name="map" />地図</a>
             </div>
             {stationState.data.stations.length > 1 && (
               <div className="station-note">
@@ -706,7 +706,7 @@ function LiveDashboard({
             </details>
             <div className="support-line medical-note">
               <p className="meta-line">半径{medicalState.data.searchRadiusKm}km・受診前に公式情報を確認して下さい</p>
-              <p className="danger-line">緊急時は119</p>
+              <p className="danger-line">緊急時は119へ</p>
             </div>
             {medicalState.data.partialData && <p className="data-source-note">周辺データの一部を取得できませんでした</p>}
             <p className="medical-source-link"><a href="https://www.iryou.teikyouseido.mhlw.go.jp/znk-web/juminkanja/S2300/initialize" target="_blank" rel="noreferrer">医療情報ネットで確認</a></p>
