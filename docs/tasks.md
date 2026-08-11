@@ -249,6 +249,7 @@
 
 - 依存: T-001、T-003、T-004
 - 完了条件: manifest、アイコン、Service Worker、アプリ資産precache、オフライン前回表示、利用者選択更新、版付き静的データキャッシュを実装する。
+- 作業記録（2026-08-11）: 確定した現在地ピン＋方位針の図案をSVG、192px・512px PNG、Apple Touch Iconへ反映し、manifestとprecacheを検証した。
 - 検証方法:
   - 正常: iOS／Androidでホーム画面追加と単独起動。
   - オフライン: app shellと24時間以内前回値を表示し、最新と偽らない。
