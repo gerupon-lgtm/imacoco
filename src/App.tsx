@@ -1304,6 +1304,8 @@ export function App({
     setInstallActionState('loading')
     try {
       await installExperience.install()
+    } catch {
+      // Browser install prompts are optional; failure must not interrupt the dashboard.
     } finally {
       dismissInstallGuidance()
     }

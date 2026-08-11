@@ -18,7 +18,7 @@
 | P-007 | カード調停・タイムアウト | 端末内処理 | FR-010〜FR-012 |
 | P-008 | 共有・コピー | Browser API | FR-013 |
 | P-009 | 保存・全消去・移行 | Browser Storage | FR-011、FR-014 |
-| P-010 | PWA更新 | Service Worker | FR-001、FR-015 |
+| P-010 | PWA導入・更新 | Browser Install API、Service Worker | FR-001、FR-015 |
 
 ## 3. 全体の呼び出し順
 
@@ -314,8 +314,12 @@ STATION_MANIFEST_ERROR / STATION_SHARD_ERROR / STATION_SCHEMA_ERROR を使う。
 - 一部削除失敗時はSTORAGE_CLEAR_FAILEDとし、どこまで削除したかを位置情報なしで記録する。
 - 24時間期限は起動時、読込時、保存時に検査する。
 
-## 14. P-010 PWA更新
+## 14. P-010 PWA導入・更新
 
+- 起動時に`display-mode: standalone`とiOS／iPadOS相当を判定する。iOS／iPadOSはSafariの共有手順を案内し、自動で共有シートを開かない。
+- Android／PCでは`beforeinstallprompt`を`preventDefault()`して一時保持し、利用者が「インストール」を選んだ場合だけ`prompt()`を呼ぶ。イベントがないブラウザへ代替ボタンを出さない。
+- `appinstalled`後は導入済みへ遷移する。ブラウザ状態は`waiting`／`ios`／`installable`／`installed`へ正規化し、React画面へブラウザ固有イベントを直接渡さない。
+- 閉じる、またはインストール要求後は`AppSettings.installPromptSeen`をtrueにする。例外時も通常画面を維持し、全消去時は他設定と同時に解除する。
 - vite-plugin-pwaの更新通知方式を使い、待機中Service Workerを画面で案内する。
 - 利用者の「更新する」操作後にskipWaiting相当を実行し、controllerchange後に1回だけ再読込する。
 - app shellはprecache、外部APIはService Workerで無期限キャッシュしない。
@@ -348,6 +352,8 @@ STATION_MANIFEST_ERROR / STATION_SHARD_ERROR / STATION_SCHEMA_ERROR を使う。
 | 駅シャード一部欠損 | 不完全結果を採用しない | 駅カードだけ失敗 | 進行中要求を共有 | カード再試行／前回値 | 1ファイル404で誤った最寄り駅を表示しない |
 | 24時間期限切れ | キャッシュ削除 | 未取得／エラー | 削除は冪等 | 新規取得 | 境界前後を時計固定で検証 |
 | PWA更新中 | 旧版を動作継続 | 更新通知 | controllerchangeを1回処理 | 新版再読込 | 二重再読込なし |
+| インストール非対応／導入済み | ブラウザ機能なし／standalone | 案内を表示しない | 状態判定は冪等 | URLから通常利用 | 偽の導入操作がない |
+| インストール要求例外 | ブラウザ要求失敗 | 案内を閉じ通常画面を維持 | 表示済みを保存 | URLから継続利用 | 全画面エラーにしない |
 | 全消去連打 | 既に空でも成功 | 完了通知1回 | 削除は冪等 | 未取得状態 | 2並行実行で残存0 |
 
 ## 17. CSP接続先

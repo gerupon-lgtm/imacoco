@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -53,7 +53,7 @@ function fakeInstallExperience(initialState: InstallExperienceState) {
   let state = initialState
   const listeners = new Set<() => void>()
   const install = vi.fn(async () => 'accepted' as const)
-  const experience: InstallExperience & { setState(next: InstallExperienceState): void } = {
+  const experience = {
     getState: () => state,
     subscribe(listener) {
       listeners.add(listener)
@@ -65,7 +65,7 @@ function fakeInstallExperience(initialState: InstallExperienceState) {
       state = next
       listeners.forEach((listener) => listener())
     }
-  }
+  } satisfies InstallExperience & { setState(next: InstallExperienceState): void }
   return experience
 }
 
@@ -187,6 +187,27 @@ describe('現在地ダッシュボード', () => {
     await user.click(screen.getByRole('button', { name: 'インストール' }))
 
     expect(installExperience.install).toHaveBeenCalledOnce()
+    expect(readAppSettings().installPromptSeen).toBe(true)
+  })
+
+  it('インストール要求の例外やEscapeでも通常画面を維持して表示済みにする', async () => {
+    const user = userEvent.setup()
+    const failingExperience = fakeInstallExperience('installable')
+    failingExperience.install.mockRejectedValueOnce(new Error('browser prompt failed'))
+
+    const { unmount } = render(
+      <App initialNow={fixedNow} initialMode="idle" installExperience={failingExperience} />
+    )
+    await user.click(screen.getByRole('button', { name: 'インストール' }))
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: /インストール/ })).not.toBeInTheDocument())
+    expect(screen.getByRole('heading', { level: 1, name: 'いまここインフォ' })).toBeVisible()
+    expect(readAppSettings().installPromptSeen).toBe(true)
+    unmount()
+
+    localStorage.clear()
+    render(<App initialNow={fixedNow} initialMode="idle" installExperience={fakeInstallExperience('ios')} />)
+    await user.keyboard('{Escape}')
+    expect(screen.queryByRole('dialog', { name: /ホーム画面に追加/ })).not.toBeInTheDocument()
     expect(readAppSettings().installPromptSeen).toBe(true)
   })
 

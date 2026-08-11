@@ -44,6 +44,7 @@ localStorageキー: imakoko-info:settings
 |---|---|---|---|
 | schemaVersion | integer | ○ | 設定形式版 |
 | onboardingAccepted | boolean | ○ | 初回説明の確認状態 |
+| installPromptSeen | boolean | ○ | PWAインストール案内の表示済み状態。旧形式ではfalseを補完 |
 | expandedCards | string[] | ○ | 展開中カードID。位置情報を含まない |
 | theme | system/light/dark | ○ | 初期値system |
 | lastSeenAppVersion | string | ○ | 更新案内判定用 |
