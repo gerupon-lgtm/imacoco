@@ -1293,6 +1293,76 @@ a {
   margin-top: 22px;
 }
 
+.install-guidance-panel {
+  width: min(100%, 460px);
+  padding: clamp(22px, 6vw, 30px);
+}
+
+.install-guidance-kicker {
+  margin: 0 0 6px;
+  color: var(--interactive-link);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+.install-guidance-panel h2 {
+  margin-bottom: 18px;
+  font-size: clamp(1.28rem, 5.2vw, 1.65rem);
+  line-height: 1.4;
+}
+
+.install-guidance-step {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--card-chip);
+}
+
+.install-guidance-step p,
+.install-guidance-note {
+  margin: 0;
+}
+
+.install-guidance-icon {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--primary-action-bg);
+  color: var(--primary-action-fg);
+}
+
+.install-guidance-icon .app-icon {
+  width: 24px;
+  height: 24px;
+}
+
+.install-guidance-note {
+  margin-top: 14px;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.install-guidance-primary,
+.install-guidance-actions button {
+  min-height: 44px;
+}
+
+.install-guidance-primary {
+  margin-top: 22px;
+}
+
+.install-guidance-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .danger-button {
   min-height: 42px;
   padding: 8px 16px;

@@ -1,10 +1,12 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { App } from './App'
+import type { InstallExperience, InstallExperienceState } from './pwa/installExperience'
 import { GeolocationProviderError } from './providers/geolocation'
 import { PlaceProviderError } from './providers/gsiReverseGeocoder'
+import { readAppSettings, updateAppSettings } from './storage/appSettings'
 
 const fixedNow = new Date('2026-08-11T05:32:00.000Z')
 
@@ -47,7 +49,29 @@ const weatherSummary = {
   }
 }
 
+function fakeInstallExperience(initialState: InstallExperienceState) {
+  let state = initialState
+  const listeners = new Set<() => void>()
+  const install = vi.fn(async () => 'accepted' as const)
+  const experience: InstallExperience & { setState(next: InstallExperienceState): void } = {
+    getState: () => state,
+    subscribe(listener) {
+      listeners.add(listener)
+      return () => listeners.delete(listener)
+    },
+    install,
+    destroy: vi.fn(),
+    setState(next) {
+      state = next
+      listeners.forEach((listener) => listener())
+    }
+  }
+  return experience
+}
+
 describe('現在地ダッシュボード', () => {
+  beforeEach(() => localStorage.clear())
+
   it('ブランド、JST日時、概算標高を利用者向け文言で表示する', () => {
     render(<App initialNow={fixedNow} initialMode="preview" />)
 
@@ -120,6 +144,73 @@ describe('現在地ダッシュボード', () => {
     expect(getCurrentLocation).not.toHaveBeenCalled()
     expect(screen.getByText('現在地を取得していません')).toBeVisible()
     expect(screen.getByRole('button', { name: '現在地を確認する' })).toBeVisible()
+  })
+
+  it('初回位置説明の完了後にiOS案内を表示して確認済みを保存する', async () => {
+    const user = userEvent.setup()
+    const installExperience = fakeInstallExperience('ios')
+
+    render(
+      <App
+        initialNow={fixedNow}
+        initialMode="intro"
+        installExperience={installExperience}
+      />
+    )
+
+    expect(screen.queryByRole('dialog', { name: 'いまここインフォをホーム画面に追加' })).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: '今は使わない' }))
+
+    const dialog = screen.getByRole('dialog', { name: 'いまここインフォをホーム画面に追加' })
+    expect(dialog).toBeVisible()
+    expect(screen.getByText(/Safariで共有を開き/)).toBeVisible()
+    await user.click(screen.getByRole('button', { name: 'わかりました' }))
+
+    expect(dialog).not.toBeInTheDocument()
+    expect(readAppSettings().installPromptSeen).toBe(true)
+  })
+
+  it('Android・PCのインストール操作をブラウザアダプターへ渡す', async () => {
+    const user = userEvent.setup()
+    const installExperience = fakeInstallExperience('installable')
+
+    render(
+      <App
+        initialNow={fixedNow}
+        initialMode="idle"
+        installExperience={installExperience}
+      />
+    )
+
+    expect(screen.getByRole('dialog', { name: 'いまここインフォをインストール' })).toBeVisible()
+    await user.click(screen.getByRole('button', { name: 'インストール' }))
+
+    expect(installExperience.install).toHaveBeenCalledOnce()
+    expect(readAppSettings().installPromptSeen).toBe(true)
+  })
+
+  it('確認済みまたは既存モーダル表示中はインストール案内を重ねない', async () => {
+    const user = userEvent.setup()
+    updateAppSettings({ installPromptSeen: true })
+    const seenExperience = fakeInstallExperience('ios')
+    const { unmount } = render(
+      <App initialNow={fixedNow} initialMode="idle" installExperience={seenExperience} />
+    )
+    expect(screen.queryByRole('dialog', { name: /ホーム画面に追加/ })).not.toBeInTheDocument()
+    unmount()
+
+    localStorage.clear()
+    const waitingExperience = fakeInstallExperience('waiting')
+    render(<App initialNow={fixedNow} initialMode="idle" installExperience={waitingExperience} />)
+    await user.click(screen.getByRole('button', { name: '出典・プライバシー' }))
+    waitingExperience.setState('installable')
+
+    expect(screen.getByRole('dialog', { name: '出典・プライバシー' })).toBeVisible()
+    expect(screen.queryByRole('dialog', { name: /インストール/ })).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: '閉じる' }))
+    expect(screen.getByRole('dialog', { name: 'いまここインフォをインストール' })).toBeVisible()
   })
 
   it('位置情報の拒否理由と再試行を表示する', async () => {
