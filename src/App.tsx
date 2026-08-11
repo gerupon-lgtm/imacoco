@@ -283,7 +283,7 @@ function PreviewDashboard() {
 
       <DashboardCard id="solar" title="太陽" icon={<AppIcon name="sun" />} className="compact-card">
         <div className="split-values">
-          <div><span className="solar-label"><AppIcon name="sunrise" />日の出</span><strong>5:02</strong></div>
+          <div><span className="solar-label"><AppIcon name="sunrise" />日の出</span><strong>05:02</strong></div>
           <div><span className="solar-label"><AppIcon name="sunset" />日の入り</span><strong>18:27</strong></div>
         </div>
       </DashboardCard>
@@ -573,7 +573,7 @@ function LiveDashboard({
       <DashboardCard id="solar" title="太陽" icon={<AppIcon name="sun" />} className="compact-card">
         {solar ? (
           <div className="split-values">
-            <div><span className="solar-label"><AppIcon name="sunrise" />日の出</span><strong>{formatJstDateTime(new Date(solar.sunriseAt)).timeLabel.replace(/^0/, '')}</strong></div>
+            <div><span className="solar-label"><AppIcon name="sunrise" />日の出</span><strong>{formatJstDateTime(new Date(solar.sunriseAt)).timeLabel}</strong></div>
             <div><span className="solar-label"><AppIcon name="sunset" />日の入り</span><strong>{formatJstDateTime(new Date(solar.sunsetAt)).timeLabel}</strong></div>
           </div>
         ) : (
@@ -1342,7 +1342,7 @@ export function App({
       ? `${weatherState.data.weather.weatherLabel} ${weatherState.data.weather.temperatureC.toFixed(1)}℃`
       : undefined,
     solar: weatherState.status === 'success'
-      ? `日の出 ${formatJstDateTime(new Date(weatherState.data.solar.sunriseAt)).timeLabel.replace(/^0/, '')}／日の入り ${formatJstDateTime(new Date(weatherState.data.solar.sunsetAt)).timeLabel}`
+      ? `日の出 ${formatJstDateTime(new Date(weatherState.data.solar.sunriseAt)).timeLabel}／日の入り ${formatJstDateTime(new Date(weatherState.data.solar.sunsetAt)).timeLabel}`
       : undefined,
     tide: tideForShare,
     government: governmentState.status === 'success'

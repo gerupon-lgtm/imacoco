@@ -100,6 +100,17 @@ describe('現在地ダッシュボード', () => {
     ])
   })
 
+  it('太陽と潮の目安を時2桁のHH:mm表記で揃える', () => {
+    render(<App initialNow={fixedNow} initialMode="preview" />)
+
+    const displayedTimes = [...document.querySelectorAll(
+      '[data-card-id="solar"] .split-values strong, [data-card-id="tide"] .split-values strong'
+    )].map((element) => element.textContent)
+
+    expect(displayedTimes).toEqual(['05:02', '18:27', '15:18', '21:42'])
+    expect(displayedTimes.every((time) => /^\d{2}:\d{2}$/.test(time ?? ''))).toBe(true)
+  })
+
   it('初回説明の明示操作後にだけ位置情報を要求して測位結果を表示する', async () => {
     const user = userEvent.setup()
     const getCurrentLocation = vi.fn().mockResolvedValue({
@@ -283,7 +294,7 @@ describe('現在地ダッシュボード', () => {
     expect(screen.getByText('標高 約10m（概算）')).toBeVisible()
     expect(screen.getByLabelText('現在気温 24.6℃')).toBeVisible()
     expect(screen.getByText('晴れ時々くもり')).toBeVisible()
-    expect(screen.getByText('5:02')).toBeVisible()
+    expect(screen.getByText('05:02')).toBeVisible()
     expect(screen.getByText('18:27')).toBeVisible()
     expect(fetchPlace).toHaveBeenCalledTimes(1)
     expect(fetchWeather).toHaveBeenCalledTimes(1)
