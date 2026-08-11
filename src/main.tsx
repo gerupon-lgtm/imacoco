@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { registerSW } from 'virtual:pwa-register'
 
 import { App } from './App'
+import { createInstallExperience } from './pwa/installExperience'
 import './index.css'
 
 const previewMode = import.meta.env.DEV && new URLSearchParams(window.location.search).has('preview')
@@ -16,9 +17,10 @@ const updateSW = registerSW({
   }
 })
 window.__IMAKOKO_UPDATE_SW__ = () => updateSW(true)
+const installExperience = createInstallExperience(window)
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App initialMode={previewMode ? 'preview' : undefined} />
+    <App initialMode={previewMode ? 'preview' : undefined} installExperience={installExperience} />
   </StrictMode>
 )

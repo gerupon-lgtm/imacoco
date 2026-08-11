@@ -5,6 +5,117 @@ test.use({
   geolocation: { latitude: 35.681236, longitude: 139.767125 }
 })
 
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => {
+    if (location.search.includes('install-test=1')) return
+    if (localStorage.getItem('imakoko-info:settings')) return
+    localStorage.setItem('imakoko-info:settings', JSON.stringify({
+      schemaVersion: 1,
+      onboardingAccepted: false,
+      installPromptSeen: true,
+      expandedCards: [],
+      theme: 'system',
+      lastSeenAppVersion: '0.1.0'
+    }))
+  })
+})
+
+test('iOS案内は初回説明後に一度だけ表示する', async ({ page }) => {
+  await page.goto('/?install-test=1')
+
+  await expect(page.getByRole('heading', { name: '現在地から、いま必要な情報をまとめます' })).toBeVisible()
+  await expect(page.getByRole('dialog', { name: 'いまここインフォをホーム画面に追加' })).toHaveCount(0)
+
+  await page.getByRole('button', { name: '今は使わない' }).click()
+
+  const dialog = page.getByRole('dialog', { name: 'いまここインフォをホーム画面に追加' })
+  await expect(dialog).toBeVisible()
+  await expect(page.getByText(/Safariで共有を開き/)).toBeVisible()
+  await expect(page.getByRole('button', { name: 'わかりました' })).toBeFocused()
+
+  const layout = await dialog.evaluate((element) => {
+    const rect = element.getBoundingClientRect()
+    return {
+      left: rect.left,
+      right: rect.right,
+      top: rect.top,
+      bottom: rect.bottom,
+      viewportWidth: window.innerWidth,
+      viewportHeight: window.innerHeight
+    }
+  })
+  expect(layout.left).toBeGreaterThanOrEqual(16)
+  expect(layout.right).toBeLessThanOrEqual(layout.viewportWidth - 16)
+  expect(layout.top).toBeGreaterThanOrEqual(16)
+  expect(layout.bottom).toBeLessThanOrEqual(layout.viewportHeight - 16)
+
+  await page.getByRole('button', { name: 'わかりました' }).click()
+  await expect(dialog).toHaveCount(0)
+  await page.reload()
+  await expect(page.getByRole('dialog', { name: 'いまここインフォをホーム画面に追加' })).toHaveCount(0)
+})
+
+test('Android・PCはブラウザが許可した場合だけインストール操作を表示する', async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, 'userAgent', { configurable: true, get: () => 'Mozilla/5.0 Windows' })
+    Object.defineProperty(navigator, 'platform', { configurable: true, get: () => 'Win32' })
+    localStorage.setItem('imakoko-info:settings', JSON.stringify({
+      schemaVersion: 1,
+      onboardingAccepted: true,
+      installPromptSeen: false,
+      expandedCards: [],
+      theme: 'system',
+      lastSeenAppVersion: '0.1.0'
+    }))
+  })
+  await page.goto('/?install-test=1')
+  await expect(page.getByRole('dialog', { name: /インストール/ })).toHaveCount(0)
+
+  await page.evaluate(() => {
+    const prompt = async () => {
+      ;(window as typeof window & { __installPromptCalled?: boolean }).__installPromptCalled = true
+    }
+    const event = Object.assign(new Event('beforeinstallprompt', { cancelable: true }), {
+      prompt,
+      userChoice: Promise.resolve({ outcome: 'accepted', platform: 'web' })
+    })
+    window.dispatchEvent(event)
+  })
+
+  const dialog = page.getByRole('dialog', { name: 'いまここインフォをインストール' })
+  await expect(dialog).toBeVisible()
+  await page.getByRole('button', { name: 'インストール' }).click()
+  await expect(dialog).toHaveCount(0)
+  await expect.poll(() => page.evaluate(
+    () => (window as typeof window & { __installPromptCalled?: boolean }).__installPromptCalled
+  )).toBe(true)
+})
+
+test('standalone起動済みならインストール案内を表示しない', async ({ page }) => {
+  await page.addInitScript(() => {
+    const nativeMatchMedia = window.matchMedia.bind(window)
+    window.matchMedia = (query: string) => {
+      const result = nativeMatchMedia(query)
+      if (query === '(display-mode: standalone)') {
+        Object.defineProperty(result, 'matches', { configurable: true, value: true })
+      }
+      return result
+    }
+    localStorage.setItem('imakoko-info:settings', JSON.stringify({
+      schemaVersion: 1,
+      onboardingAccepted: true,
+      installPromptSeen: false,
+      expandedCards: [],
+      theme: 'dark',
+      lastSeenAppVersion: '0.1.0'
+    }))
+  })
+  await page.goto('/?install-test=1')
+
+  await expect(page.locator('html')).toHaveAttribute('data-color-mode', 'dark')
+  await expect(page.getByRole('dialog', { name: /ホーム画面に追加|インストール/ })).toHaveCount(0)
+})
+
 test('初回説明からGPS・地名・天気を順次表示する', async ({ page }) => {
   await page.route('https://marine-api.open-meteo.com/**', async (route) => {
     const start = Date.parse('2026-08-11T00:00:00.000Z') / 1_000
@@ -70,7 +181,7 @@ test('初回説明からGPS・地名・天気を順次表示する', async ({ pa
   await expect(page.getByText('千代田区役所', { exact: true })).toBeVisible()
   await expect(page.getByText('病院　3件', { exact: true })).toBeVisible()
   await expect(page.getByText('一般診療所　3件', { exact: true })).toBeVisible()
-  await expect(page.getByText('緊急時は119へ', { exact: true })).toBeVisible()
+  await expect(page.getByText('緊急時は119', { exact: true })).toBeVisible()
   await expect(page.getByText('半径10km・受診前に公式情報を確認して下さい', { exact: true })).toBeVisible()
 
   await page.getByRole('button', { name: '保存データを消去' }).click()
@@ -346,7 +457,7 @@ test('補足情報を横一列に整理して現在地カードをコンパク�
 
   await sameRow('精度の目安 ±18m', '標高 約10m（概算）')
   await sameRow('約12km先の海洋モデル', '航海・防災には使用不可です')
-  await sameRow('その他の医療機関を確認中…', '緊急時は119へ')
+  await sameRow('その他の医療機関を確認中…', '緊急時は119')
 
   const medicalCard = await page.locator('[data-card-id="medical"]').boundingBox()
   const distanceNotice = await page.getByText('表示距離はすべて現在地からの直線距離です', { exact: true }).boundingBox()
@@ -367,6 +478,7 @@ test('測位できない再訪時は24時間以内の前回位置を明示して
     localStorage.setItem('imakoko-info:settings', JSON.stringify({
       schemaVersion: 1,
       onboardingAccepted: true,
+      installPromptSeen: true,
       expandedCards: [],
       theme: 'system',
       lastSeenAppVersion: '0.1.0'

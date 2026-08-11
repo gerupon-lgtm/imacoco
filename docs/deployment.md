@@ -4,7 +4,7 @@
 
 - GitHub: `https://github.com/gerupon-lgtm/imacoco`（公開）
 - 本番ブランチ: `main`
-- 修正ブランチ: `fix/dark-mode-contrast-version`
+- 修正ブランチ: 作業ごとのfeature／fixブランチからPRを作成
 - 初回公開PR: `#1`（マージ済み）
 - アプリ版: `mvp-0.1.0`
 - 本番公開: `https://imacoco.sikumilab.com/`（Cloudflare Pages）
@@ -19,7 +19,7 @@ npm.cmd run check
 npm.cmd run test:e2e
 ```
 
-`check`は版整合、全国データ全件検査、型、単体・結合テスト、本番ビルドを行う。E2EはGPS許可、実データカード、保存データ全消去、画面順・装飾、前回位置復元を確認する。
+`check`は版整合、全国データ全件検査、型、単体・結合テスト、本番ビルドを行う。E2EはGPS許可、実データカード、保存データ全消去、画面順・装飾、前回位置復元、iOS／Android／PCのインストール案内条件を確認する。
 
 ## 3. Cloudflare Pages Preview
 
@@ -46,6 +46,8 @@ Viteの標準値が`npm run build`／`dist`であることはCloudflareの[Build
 5. 再読込とオフライン再訪で24時間以内の前回値が明示される。
 6. `manifest.webmanifest`、`sw.js`、`_headers`が200で返る。
 7. 応答に`X-Robots-Tag: noindex, nofollow, noarchive`とCSPが付く。
+8. 初回位置説明中はインストール案内が重ならず、完了後のiPhone／iPadではSafariの「ホーム画面に追加」手順が一度だけ表示される。
+9. Android／PCではブラウザが導入可能と判定した場合だけ「インストール」を表示し、導入済みのstandalone起動や非対応ブラウザでは表示しない。
 
 ## 4. 本番と独自ドメイン
 

@@ -12,6 +12,7 @@ import {
   type ShareSelection
 } from './domain/share'
 import { formatJstDateTime, millisecondsUntilNextMinute } from './domain/time'
+import type { InstallExperience, InstallExperienceState } from './pwa/installExperience'
 import { APP_DISPLAY_VERSION } from './version'
 import {
   createGeolocationProvider,
@@ -79,6 +80,7 @@ type AppProps = {
   stationProvider?: StaticStationProvider
   medicalProvider?: StaticMedicalProvider
   governmentProvider?: StaticGovernmentProvider
+  installExperience?: InstallExperience
 }
 
 type LocationUiState =
@@ -322,7 +324,7 @@ function PreviewDashboard() {
         <div className="loading-bars" aria-label="その他の医療機関を確認中"><i /><i /><i /><i /></div>
         <div className="support-line medical-note">
           <p className="meta-line">その他の医療機関を確認中…</p>
-          <p className="danger-line">緊急時は119へ</p>
+          <p className="danger-line">緊急時は119</p>
         </div>
       </DashboardCard>
       <p className="dashboard-distance-note">表示距離はすべて現在地からの直線距離です</p>
@@ -706,7 +708,7 @@ function LiveDashboard({
             </details>
             <div className="support-line medical-note">
               <p className="meta-line">半径{medicalState.data.searchRadiusKm}km・受診前に公式情報を確認して下さい</p>
-              <p className="danger-line">緊急時は119へ</p>
+              <p className="danger-line">緊急時は119</p>
             </div>
             {medicalState.data.partialData && <p className="data-source-note">周辺データの一部を取得できませんでした</p>}
             <p className="medical-source-link"><a href="https://www.iryou.teikyouseido.mhlw.go.jp/znk-web/juminkanja/S2300/initialize" target="_blank" rel="noreferrer">医療情報ネットで確認</a></p>
@@ -735,7 +737,8 @@ export function App({
   tideProvider,
   stationProvider,
   medicalProvider,
-  governmentProvider
+  governmentProvider,
+  installExperience
 }: AppProps) {
   const now = useLiveNow(initialNow)
   const dateTime = useMemo(() => formatJstDateTime(now), [now])
@@ -780,6 +783,13 @@ export function App({
   const [shareFallback, setShareFallback] = useState<'idle' | 'manual'>('idle')
   const [pwaUpdateState, setPwaUpdateState] = useState<'idle' | 'available' | 'loading'>('idle')
   const [themeMode, setThemeMode] = useState<AppSettings['theme']>(() => readAppSettings().theme)
+  const [installState, setInstallState] = useState<InstallExperienceState>(
+    () => installExperience?.getState() ?? 'installed'
+  )
+  const [installPromptSeen, setInstallPromptSeen] = useState(
+    () => readAppSettings().installPromptSeen
+  )
+  const [installActionState, setInstallActionState] = useState<'idle' | 'loading'>('idle')
   const [toast, setToast] = useState<string>()
   const requestVersion = useRef(0)
   const latestFix = useRef<LocationFix | undefined>(undefined)
@@ -795,6 +805,13 @@ export function App({
       window.removeEventListener('imakoko:pwa-offline-ready', handleOfflineReady)
     }
   }, [])
+
+  useEffect(() => {
+    if (!installExperience) return
+    const syncInstallState = () => setInstallState(installExperience.getState())
+    syncInstallState()
+    return installExperience.subscribe(syncInstallState)
+  }, [installExperience])
 
   useEffect(() => {
     const mediaQuery = typeof window.matchMedia === 'function'
@@ -1259,6 +1276,8 @@ export function App({
       setGovernmentState({ status: 'idle' })
       setMedicalState({ status: 'idle' })
       setThemeMode('system')
+      setInstallPromptSeen(false)
+      setInstallActionState('idle')
       setOpenPanel(null)
       setClearStatus('idle')
       setToast('保存データを消去しました')
@@ -1269,6 +1288,38 @@ export function App({
 
   const isIntro = locationState.status === 'intro'
   const isPreview = locationState.status === 'preview'
+  const showInstallGuidance = !isIntro
+    && openPanel === null
+    && !installPromptSeen
+    && (installState === 'ios' || installState === 'installable')
+
+  const dismissInstallGuidance = useCallback(() => {
+    updateAppSettings({ installPromptSeen: true })
+    setInstallPromptSeen(true)
+    setInstallActionState('idle')
+  }, [])
+
+  const requestInstall = useCallback(async () => {
+    if (!installExperience || installActionState === 'loading') return
+    setInstallActionState('loading')
+    try {
+      await installExperience.install()
+    } catch {
+      // Browser install prompts are optional; failure must not interrupt the dashboard.
+    } finally {
+      dismissInstallGuidance()
+    }
+  }, [dismissInstallGuidance, installActionState, installExperience])
+
+  useEffect(() => {
+    if (!showInstallGuidance) return
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') dismissInstallGuidance()
+    }
+    document.addEventListener('keydown', handleEscape)
+    return () => document.removeEventListener('keydown', handleEscape)
+  }, [dismissInstallGuidance, showInstallGuidance])
+
   const dashboardSources = [placeState, weatherState, tideState, stationState, governmentState, medicalState]
     .flatMap((state) => state.status === 'success' ? [state.source] : [])
   const dashboardSourceNotice = dashboardSources.includes('stale')
@@ -1531,6 +1582,67 @@ export function App({
                   <button type="button" className="secondary-button compact-button" disabled={clearStatus === 'loading'} onClick={() => setOpenPanel(null)}>キャンセル</button>
                   <button type="button" className="danger-button" disabled={clearStatus === 'loading'} onClick={() => void clearSavedData()}>
                     {clearStatus === 'loading' ? '消去中…' : '消去する'}
+                  </button>
+                </div>
+              </>
+            )}
+          </section>
+        </div>
+      )}
+      {showInstallGuidance && (
+        <div className="modal-backdrop install-guidance-backdrop" role="presentation" onMouseDown={(event) => {
+          if (event.target === event.currentTarget && installActionState !== 'loading') dismissInstallGuidance()
+        }}>
+          <section
+            className="modal-panel install-guidance-panel"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="install-guidance-title"
+            aria-describedby="install-guidance-description"
+          >
+            <p className="install-guidance-kicker">いまここインフォ</p>
+            {installState === 'ios' ? (
+              <>
+                <h2 id="install-guidance-title">いまここインフォをホーム画面に追加</h2>
+                <div className="install-guidance-step" id="install-guidance-description">
+                  <span className="install-guidance-icon" aria-hidden="true"><AppIcon name="share" /></span>
+                  <p>iPhone・iPadではSafariで共有を開き、「ホーム画面に追加」を選んでください。</p>
+                </div>
+                <p className="install-guidance-note">ホーム画面から、いまここインフォをすぐ開けるようになります。</p>
+                <button
+                  type="button"
+                  className="primary-button modal-close install-guidance-primary"
+                  autoFocus
+                  onClick={dismissInstallGuidance}
+                >
+                  わかりました
+                </button>
+              </>
+            ) : (
+              <>
+                <h2 id="install-guidance-title">いまここインフォをインストール</h2>
+                <div className="install-guidance-step" id="install-guidance-description">
+                  <span className="install-guidance-icon" aria-hidden="true"><AppIcon name="pin" /></span>
+                  <p>ホーム画面やアプリ一覧から、いまここインフォをすぐ開けるようにします。</p>
+                </div>
+                <p className="install-guidance-note">インストール後も、位置情報や表示データはこの端末だけに保存されます。</p>
+                <div className="modal-actions install-guidance-actions">
+                  <button
+                    type="button"
+                    className="secondary-button compact-button"
+                    disabled={installActionState === 'loading'}
+                    onClick={dismissInstallGuidance}
+                  >
+                    今はしない
+                  </button>
+                  <button
+                    type="button"
+                    className="primary-button compact-button"
+                    autoFocus
+                    disabled={installActionState === 'loading'}
+                    onClick={() => void requestInstall()}
+                  >
+                    {installActionState === 'loading' ? '確認中…' : 'インストール'}
                   </button>
                 </div>
               </>
