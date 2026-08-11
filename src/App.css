@@ -11,6 +11,8 @@
   --info-note: #176785;
   --primary-action-bg: #082f67;
   --primary-action-fg: #ffffff;
+  --annotation-font-size: 0.82rem;
+  --annotation-line-height: 1.45;
   --row-surface: rgba(255, 255, 255, 0.58);
   --icon-cloud-fill: #f7fbfd;
   --icon-cloud-stroke: #8ca3b6;
@@ -35,8 +37,8 @@ a {
   margin: 0 auto;
   padding: clamp(18px, 4vw, 40px);
   background:
-    radial-gradient(circle at 22% 0%, rgba(55, 139, 157, 0.11), transparent 28%),
-    linear-gradient(180deg, #d7e5e9 0, #e2eaec 25%, #d6e3e7 100%);
+    radial-gradient(circle at 22% 0%, rgba(55, 139, 157, 0.09), transparent 28%),
+    linear-gradient(180deg, #e2eef1 0, #edf3f5 25%, #e0ebee 100%);
 }
 
 .app-header {
@@ -90,7 +92,7 @@ a {
   margin: 5px 0 0;
   color: var(--interactive-link);
   font-size: 0.76rem;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.24em;
 }
 
 .copyright {
@@ -338,7 +340,7 @@ a {
   --card-wash: rgba(19, 168, 194, 0.11);
   position: relative;
   overflow: hidden;
-  padding: 18px 20px;
+  padding: 15px 20px 18px;
   border: 1px solid var(--line);
   border-radius: 17px;
   background:
@@ -436,18 +438,18 @@ a {
 
 .location-layout {
   display: grid;
-  grid-template-columns: 82px 1fr;
+  grid-template-columns: 50px 1fr;
   align-items: center;
   gap: 12px;
 }
 
 .location-pin {
   display: grid;
-  width: 72px;
-  height: 72px;
+  width: 38px;
+  height: 48px;
+  justify-self: end;
   place-items: center;
-  border-radius: 50%;
-  background: var(--card-chip);
+  background: transparent;
 }
 
 .location-pin .pin-mark {
@@ -523,12 +525,14 @@ a {
 .boundary-caution {
   margin: 7px 0 0;
   color: var(--sunset-coral);
-  font-size: 0.84rem;
+  font-size: var(--annotation-font-size);
+  line-height: var(--annotation-line-height);
 }
 
 .data-source-note {
   color: var(--info-note);
-  font-size: 0.82rem;
+  font-size: var(--annotation-font-size);
+  line-height: var(--annotation-line-height);
 }
 
 .weather-source-note {
@@ -629,7 +633,8 @@ a {
 .support-line .meta-line,
 .support-line .danger-line {
   margin: 0;
-  font-size: clamp(0.75rem, 3.1vw, 0.9rem);
+  font-size: var(--annotation-font-size);
+  line-height: var(--annotation-line-height);
   white-space: nowrap;
 }
 
@@ -759,8 +764,8 @@ a {
 .dashboard-distance-note {
   margin: -2px 4px 0;
   color: var(--muted);
-  font-size: 0.82rem;
-  line-height: 1.45;
+  font-size: var(--annotation-font-size);
+  line-height: var(--annotation-line-height);
   text-align: right;
 }
 
@@ -906,7 +911,7 @@ a {
   min-height: 29px;
   gap: 4px;
   padding: 6px 9px;
-  font-size: 0.78rem;
+  font-size: 1rem;
   line-height: 1.2;
 }
 
@@ -1373,7 +1378,7 @@ a {
   }
 
   .info-card {
-    padding: 16px 14px;
+    padding: 11px 14px 16px;
   }
 
   .info-card:is([data-card-id='station'], [data-card-id='government']) {
@@ -1385,18 +1390,18 @@ a {
   }
 
   .location-layout {
-    grid-template-columns: 62px 1fr;
+    grid-template-columns: 34px 1fr;
     gap: 10px;
   }
 
   .location-pin {
-    width: 56px;
-    height: 56px;
+    width: 26px;
+    height: 33px;
   }
 
   .location-pin .pin-mark {
-    width: 30px;
-    height: 38px;
+    width: 26px;
+    height: 33px;
   }
 
   .location-name {
