@@ -783,7 +783,7 @@ function LiveDashboard({
             </div>
           </>
         ) : tideState.status === 'success' ? (
-          <div className="pending-card"><span>近くに対象の海洋格子がないため表示しません</span></div>
+          <div className="pending-card"><span>近くに対象の海洋データがないため、潮の目安は表示していません</span></div>
         ) : (
           <AsyncCardMessage
             state={tideState}

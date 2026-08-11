@@ -350,6 +350,27 @@ describe('現在地ダッシュボード', () => {
     expect(fetchPlace).toHaveBeenCalledTimes(2)
   })
 
+  it('近くに海洋データがない場合は潮の目安を表示しない理由を案内する', async () => {
+    const user = userEvent.setup()
+
+    render(
+      <App
+        initialNow={fixedNow}
+        initialMode="intro"
+        geolocationProvider={{ getCurrentLocation: vi.fn().mockResolvedValue(locationFix) }}
+        tideProvider={{
+          fetchTide: vi.fn().mockResolvedValue({ status: 'not_applicable', distanceMeters: 31_000 })
+        }}
+      />
+    )
+
+    await user.click(screen.getByRole('button', { name: '現在地で表示' }))
+
+    expect(await screen.findByText(
+      '近くに対象の海洋データがないため、潮の目安は表示していません'
+    )).toBeVisible()
+  })
+
   it('出典・プライバシーに外部送信と概算値の注意を表示する', async () => {
     const user = userEvent.setup()
     render(<App initialNow={fixedNow} initialMode="idle" />)
