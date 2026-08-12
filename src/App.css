@@ -21,6 +21,11 @@
   --row-surface: rgba(255, 255, 255, 0.58);
   --icon-cloud-fill: #f7fbfd;
   --icon-cloud-stroke: #8ca3b6;
+  --icon-fog-stroke: #6f91a8;
+  --icon-lightning-fill: #f6b900;
+  --icon-lightning-stroke: #d99200;
+  --icon-rain-stroke: #1589c9;
+  --icon-snow-stroke: #2e9fce;
   --line: #d8e6ef;
   --header-control-border: #cbdde8;
   --surface: rgba(255, 255, 255, 0.93);
@@ -171,6 +176,24 @@ a {
 .icon-cloud {
   fill: var(--icon-cloud-fill);
   stroke: var(--icon-cloud-stroke);
+}
+
+.icon-rain-line {
+  stroke: var(--icon-rain-stroke);
+}
+
+.icon-fog-line {
+  stroke: var(--icon-fog-stroke);
+}
+
+.icon-snowflake {
+  stroke: var(--icon-snow-stroke);
+  stroke-width: 2;
+}
+
+.icon-lightning {
+  fill: var(--icon-lightning-fill);
+  stroke: var(--icon-lightning-stroke);
 }
 
 .icon-soft-fill {
@@ -1743,6 +1766,9 @@ a {
   --shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
   --icon-cloud-fill: #d6e8f2;
   --icon-cloud-stroke: #84a5ba;
+  --icon-fog-stroke: #a4c7d8;
+  --icon-rain-stroke: #69d4f2;
+  --icon-snow-stroke: #8de7ff;
   --interactive-link: #8cdcf4;
   --info-note: #9be6f7;
   --primary-action-bg: #7ed5e8;

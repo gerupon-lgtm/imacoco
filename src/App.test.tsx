@@ -327,6 +327,27 @@ describe('現在地ダッシュボード', () => {
     expect(fetchWeather).toHaveBeenCalledTimes(1)
   })
 
+  it('雨の天気状態に雨アイコンを表示する', async () => {
+    const user = userEvent.setup()
+    const rainyWeatherSummary = {
+      ...weatherSummary,
+      weather: { ...weatherSummary.weather, weatherCode: 61, weatherLabel: '雨' }
+    }
+
+    render(
+      <App
+        initialNow={fixedNow}
+        initialMode="intro"
+        geolocationProvider={{ getCurrentLocation: vi.fn().mockResolvedValue(locationFix) }}
+        weatherProvider={{ fetchWeather: vi.fn().mockResolvedValue(rainyWeatherSummary) }}
+      />
+    )
+
+    await user.click(screen.getByRole('button', { name: '現在地で表示' }))
+    expect(await screen.findByText('雨', { selector: '.weather-condition' })).toBeVisible()
+    expect(document.querySelector('.weather-state-icon')).toHaveClass('app-icon--rain')
+  })
+
   it('地名取得だけが失敗しても天気と標高を維持し個別再試行を示す', async () => {
     const user = userEvent.setup()
     const fetchPlace = vi.fn().mockRejectedValue(new PlaceProviderError('PLACE_NETWORK_ERROR'))

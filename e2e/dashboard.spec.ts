@@ -176,6 +176,7 @@ test('初回説明からGPS・地名・天気を順次表示する', async ({ pa
   await expect(page.getByText('標高 約16m（概算）')).toBeVisible()
   await expect(page.getByLabel('現在気温 24.5℃')).toBeVisible()
   await expect(page.locator('.weather-condition')).toHaveText('雨')
+  await expect(page.locator('.weather-state-icon')).toHaveClass(/app-icon--rain/)
   await expect(page.getByText('干潮の目安')).toBeVisible()
   await expect(page.getByText(/^※約.+先の海洋モデル$/)).toBeVisible()
   await expect(page.getByText('航海・防災には使用不可です')).toBeVisible()
@@ -795,7 +796,7 @@ test('測位できない再訪時は24時間以内の前回位置を明示して
   await expect(page.getByText('前回の位置', { exact: true })).toBeVisible()
   const footerStatus = page.locator('.footer-meta')
   await expect(footerStatus.getByText('一部に15分以内の保存済み情報を表示しています', { exact: true })).toHaveCount(1)
-  await expect(footerStatus).toContainText('mvp-0.2.1')
+  await expect(footerStatus).toContainText('mvp-0.2.2')
   await expect(page.getByText('現在地を取得できないため、24時間以内の前回位置を表示しています')).toBeVisible()
 })
 
@@ -956,5 +957,5 @@ test('天気の気温補足値を一列に揃え、MVP版を表示する', async
     Math.max(...temperatureValueTops) - Math.min(...temperatureValueTops),
     `weather temperature value tops: ${JSON.stringify(temperatureValueTops)}`
   ).toBeLessThanOrEqual(1)
-  await expect.soft(page.locator('.app-footer')).toContainText('mvp-0.2.1')
+  await expect.soft(page.locator('.app-footer')).toContainText('mvp-0.2.2')
 })
