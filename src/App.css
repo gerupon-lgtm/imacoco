@@ -226,7 +226,7 @@ a {
 .current-date,
 .current-clock {
   color: var(--navy);
-  font-size: clamp(1rem, 3.9vw, 1.28rem);
+  font-size: clamp(1.125rem, 4.6vw, 1.4rem);
   font-weight: 700;
   line-height: 1.2;
   white-space: nowrap;
@@ -1504,6 +1504,7 @@ a {
 
   .app-header {
     gap: 8px;
+    margin-bottom: 12px;
   }
 
   .brand-block {

@@ -54,7 +54,7 @@
 ## バージョン管理
 
 - 形式: mvp-MAJOR.MINOR.PATCH
-- 現在版: mvp-0.2.0
+- 現在版: mvp-0.2.1
 - 増分: PATCH=不具合修正、MINOR=後方互換のある機能追加、MAJOR=保存形式等の破壊的変更
 - リセット: MINOR更新時はPATCHを0、MAJOR更新時はMINOR/PATCHを0
 - 正典: package.jsonのversion。表示時にmvp-を付ける

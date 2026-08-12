@@ -324,6 +324,37 @@ test('モバイル画面が指定の順序と日時装飾で表示される', as
   await page.screenshot({ path: 'test-results/dashboard-mobile.png', fullPage: true })
 })
 
+test('410px幅で日付と時刻を大きく保ち上下の間隔を揃える', async ({ page }) => {
+  await page.setViewportSize({ width: 410, height: 920 })
+  await page.goto('/?preview=1')
+
+  const metrics = await page.evaluate(() => {
+    const rect = (selector: string) => document.querySelector<HTMLElement>(selector)!.getBoundingClientRect()
+    const dateRail = rect('.date-rail')
+    const date = rect('.current-date')
+    const clock = rect('.current-clock')
+    const themePicker = rect('.theme-picker')
+    const locationCard = rect('[data-card-id="location"]')
+    const dateStyle = getComputedStyle(document.querySelector('.current-date')!)
+    const clockStyle = getComputedStyle(document.querySelector('.current-clock')!)
+    const dateRailElement = document.querySelector<HTMLElement>('.date-rail')!
+    return {
+      dateFontSize: Number.parseFloat(dateStyle.fontSize),
+      clockFontSize: Number.parseFloat(clockStyle.fontSize),
+      controlsToDateGap: dateRail.top - themePicker.bottom,
+      dateToLocationGap: locationCard.top - dateRail.bottom,
+      dateBeforeClock: date.right < clock.left,
+      dateRailFits: dateRailElement.scrollWidth <= dateRailElement.clientWidth
+    }
+  })
+
+  expect(metrics.dateFontSize).toBeGreaterThanOrEqual(18)
+  expect(metrics.clockFontSize).toBe(metrics.dateFontSize)
+  expect(Math.abs(metrics.controlsToDateGap - metrics.dateToLocationGap)).toBeLessThanOrEqual(1)
+  expect(metrics.dateBeforeClock).toBe(true)
+  expect(metrics.dateRailFits).toBe(true)
+})
+
 test('表示色モードをライト・ダーク・自動から選んで保存できる', async ({ page }) => {
   await page.goto('/?preview=1')
 
@@ -764,7 +795,7 @@ test('測位できない再訪時は24時間以内の前回位置を明示して
   await expect(page.getByText('前回の位置', { exact: true })).toBeVisible()
   const footerStatus = page.locator('.footer-meta')
   await expect(footerStatus.getByText('一部に15分以内の保存済み情報を表示しています', { exact: true })).toHaveCount(1)
-  await expect(footerStatus).toContainText('mvp-0.2.0')
+  await expect(footerStatus).toContainText('mvp-0.2.1')
   await expect(page.getByText('現在地を取得できないため、24時間以内の前回位置を表示しています')).toBeVisible()
 })
 
@@ -925,5 +956,5 @@ test('天気の気温補足値を一列に揃え、MVP版を表示する', async
     Math.max(...temperatureValueTops) - Math.min(...temperatureValueTops),
     `weather temperature value tops: ${JSON.stringify(temperatureValueTops)}`
   ).toBeLessThanOrEqual(1)
-  await expect.soft(page.locator('.app-footer')).toContainText('mvp-0.2.0')
+  await expect.soft(page.locator('.app-footer')).toContainText('mvp-0.2.1')
 })
