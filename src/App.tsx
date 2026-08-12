@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { AppIcon } from './components/AppIcon'
+import { WeatherStateIcon } from './components/WeatherStateIcon'
 import municipalityData from './data/municipalities.generated.json'
 import { formatApproximateDistance } from './domain/geo'
 import type { MedicalSummary, NearbyMedicalFacility, StationSummary } from './domain/nearby'
@@ -354,7 +355,7 @@ function PreviewDashboard() {
       <DashboardCard id="weather" title="天気" icon={<AppIcon name="sun" />}>
         <div className="weather-grid">
           <div className="weather-main">
-            <AppIcon name="partly-cloudy" className="weather-state-icon" />
+            <WeatherStateIcon weatherCode={2} className="weather-state-icon" />
             <div className="weather-current-copy">
               <strong aria-label="現在気温 24.6℃"><span>24.6</span><span className="temperature-unit">℃</span></strong>
               <p className="weather-condition">晴れ</p>
@@ -718,7 +719,7 @@ function LiveDashboard({
           <>
             <div className="weather-grid">
               <div className="weather-main">
-                <AppIcon name={weather.weatherCode <= 1 ? 'sun' : 'partly-cloudy'} className="weather-state-icon" />
+                <WeatherStateIcon weatherCode={weather.weatherCode} className="weather-state-icon" />
                 <div className="weather-current-copy">
                   <strong aria-label={`現在気温 ${weather.temperatureC.toFixed(1)}℃`}><span>{weather.temperatureC.toFixed(1)}</span><span className="temperature-unit">℃</span></strong>
                   <p className="weather-condition">{weather.weatherLabel}</p>

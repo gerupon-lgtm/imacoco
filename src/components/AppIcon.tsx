@@ -2,16 +2,21 @@ export type AppIconName =
   | 'building'
   | 'chevron'
   | 'clock'
+  | 'cloud'
+  | 'fog'
   | 'map'
   | 'medical'
   | 'partly-cloudy'
   | 'pin'
+  | 'rain'
   | 'refresh'
   | 'share'
   | 'shield'
+  | 'snow'
   | 'sun'
   | 'sunrise'
   | 'sunset'
+  | 'thunderstorm'
   | 'train'
   | 'trash'
   | 'waves'
@@ -35,6 +40,16 @@ function IconBody({ name }: { name: AppIconName }) {
       return <><circle className="icon-sun-fill" cx="24" cy="24" r="8" /><path className="icon-sun-ray" d="M24 5v6M24 37v6M5 24h6M37 24h6M10.6 10.6l4.3 4.3M33.1 33.1l4.3 4.3M37.4 10.6l-4.3 4.3M14.9 33.1l-4.3 4.3" /></>
     case 'partly-cloudy':
       return <><circle className="icon-sun-fill" cx="17" cy="17" r="8" /><path className="icon-sun-ray" d="M17 3v5M17 26v5M3 17h5M26 17h5M7.2 7.2l3.6 3.6M23.2 23.2l3.6 3.6M26.8 7.2l-3.6 3.6" /><path className="icon-cloud" d="M16 39h22a7 7 0 0 0 .5-14 11 11 0 0 0-20.7-2.7A8.5 8.5 0 0 0 16 39Z" /></>
+    case 'cloud':
+      return <path className="icon-cloud" d="M10 34h27a7 7 0 0 0 .5-14 11 11 0 0 0-20.7-2.7A8.5 8.5 0 0 0 10 34Z" />
+    case 'fog':
+      return <><path className="icon-cloud" d="M10 29h27a7 7 0 0 0 .5-14 11 11 0 0 0-20.7-2.7A8.5 8.5 0 0 0 10 29Z" /><path className="icon-fog-line" d="M8 36h14M28 36h12M12 43h25" /></>
+    case 'rain':
+      return <><path className="icon-cloud" d="M10 31h27a7 7 0 0 0 .5-14 11 11 0 0 0-20.7-2.7A8.5 8.5 0 0 0 10 31Z" /><path className="icon-rain-line" d="m15 36-2 5M25 36l-2 5M35 36l-2 5" /></>
+    case 'snow':
+      return <><path className="icon-cloud" d="M10 29h27a7 7 0 0 0 .5-14 11 11 0 0 0-20.7-2.7A8.5 8.5 0 0 0 10 29Z" /><path className="icon-snowflake" d="M17 34v10M12.7 36.5l8.6 5M21.3 36.5l-8.6 5M31 34v10M26.7 36.5l8.6 5M35.3 36.5l-8.6 5" /></>
+    case 'thunderstorm':
+      return <><path className="icon-cloud" d="M10 30h27a7 7 0 0 0 .5-14 11 11 0 0 0-20.7-2.7A8.5 8.5 0 0 0 10 30Z" /><path className="icon-lightning" d="m25 29-7 10h6l-2 7 10-13h-6l3-4Z" /></>
     case 'sunrise':
     case 'sunset':
       return <><path className="icon-sun-arc" d="M14 30a10 10 0 0 1 20 0" /><path className="icon-sun-ray" d="M24 8v7M8 30h5M35 30h5M12.5 17.5l4 4M35.5 17.5l-4 4" /><path className="icon-horizon" d="M7 35h34M13 41h22" /></>
