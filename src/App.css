@@ -773,14 +773,21 @@ a {
 
 .weather-daily-probability-note,
 .weather-hourly-probability-note {
-  margin: 8px 0 0;
   color: var(--info-note);
   font-size: var(--annotation-font-size);
   line-height: var(--annotation-line-height);
 }
 
 .weather-daily-probability-note {
+  margin: 0 0 0 auto;
+  font-size: clamp(0.64rem, 3vw, var(--annotation-font-size));
+  line-height: 1.35;
   text-align: right;
+  white-space: nowrap;
+}
+
+.weather-hourly-probability-note {
+  margin: 8px 0 0;
 }
 
 .warm { color: #f54a3f; }

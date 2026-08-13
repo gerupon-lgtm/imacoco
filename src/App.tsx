@@ -352,7 +352,12 @@ function PreviewDashboard() {
         onRetry={async () => undefined}
       />
 
-      <DashboardCard id="weather" title="天気" icon={<AppIcon name="sun" />}>
+      <DashboardCard
+        id="weather"
+        title="天気"
+        icon={<AppIcon name="sun" />}
+        headingMeta={<p className="weather-daily-probability-note">※降水の％は今日の最大値です。</p>}
+      >
         <div className="weather-grid">
           <div className="weather-main">
             <WeatherStateIcon weatherCode={2} className="weather-state-icon" />
@@ -368,7 +373,6 @@ function PreviewDashboard() {
             <div><dt>降水</dt><dd>20%</dd></div>
           </dl>
         </div>
-        <p className="weather-daily-probability-note">※降水の％は今日の最大値です。</p>
         <details className="card-details">
           <summary>この先6時間</summary>
           <HourlyForecast hours={previewHourlyWeather} />
@@ -716,7 +720,14 @@ function LiveDashboard({
 
       <StationCard state={stationState} onRetry={retryStation} />
 
-      <DashboardCard id="weather" title="天気" icon={<AppIcon name="sun" />}>
+      <DashboardCard
+        id="weather"
+        title="天気"
+        icon={<AppIcon name="sun" />}
+        headingMeta={weather
+          ? <p className="weather-daily-probability-note">※降水の％は今日の最大値です。</p>
+          : undefined}
+      >
         {weather ? (
           <>
             <div className="weather-grid">
@@ -734,7 +745,6 @@ function LiveDashboard({
                 <div><dt>降水</dt><dd>{Math.round(weather.precipitationProbabilityMax)}%</dd></div>
               </dl>
             </div>
-            <p className="weather-daily-probability-note">※降水の％は今日の最大値です。</p>
             {weather.nextSixHours.length > 0 && (
               <details className="card-details">
                 <summary>この先6時間</summary>
