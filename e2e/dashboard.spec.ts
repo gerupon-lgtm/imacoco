@@ -417,6 +417,21 @@ test('この先6時間に時間ごとの天気状態を表示する', async ({ p
   await expect(weatherCard.getByText('※時間別の％は直前1時間の降水確率です。')).toBeVisible()
 })
 
+test('スマホだけ現在気温を少し小さく表示する', async ({ page }) => {
+  for (const { width, expectedFontSize } of [
+    { width: 390, expectedFontSize: 34 },
+    { width: 900, expectedFontSize: 40 },
+  ]) {
+    await page.setViewportSize({ width, height: 900 })
+    await page.goto('/?preview=1')
+
+    const fontSize = await page.locator('.weather-main strong').evaluate((temperature) =>
+      Number.parseFloat(getComputedStyle(temperature).fontSize)
+    )
+    expect(fontSize).toBe(expectedFontSize)
+  }
+})
+
 test('太陽と潮の時刻を同じ左右位置に揃える', async ({ page }) => {
   for (const width of [390, 900]) {
     await page.setViewportSize({ width, height: 900 })
@@ -824,7 +839,7 @@ test('測位できない再訪時は24時間以内の前回位置を明示して
   await expect(page.getByText('前回の位置', { exact: true })).toBeVisible()
   const footerStatus = page.locator('.footer-meta')
   await expect(footerStatus.getByText('一部に15分以内の保存済み情報を表示しています', { exact: true })).toHaveCount(1)
-  await expect(footerStatus).toContainText('mvp-0.2.4')
+  await expect(footerStatus).toContainText('mvp-0.2.5')
   await expect(page.getByText('現在地を取得できないため、24時間以内の前回位置を表示しています')).toBeVisible()
 })
 
@@ -985,5 +1000,5 @@ test('天気の気温補足値を一列に揃え、MVP版を表示する', async
     Math.max(...temperatureValueTops) - Math.min(...temperatureValueTops),
     `weather temperature value tops: ${JSON.stringify(temperatureValueTops)}`
   ).toBeLessThanOrEqual(1)
-  await expect.soft(page.locator('.app-footer')).toContainText('mvp-0.2.4')
+  await expect.soft(page.locator('.app-footer')).toContainText('mvp-0.2.5')
 })
