@@ -109,11 +109,20 @@ describe('現在地ダッシュボード', () => {
     expect(weatherCard).not.toBeNull()
 
     const card = within(weatherCard as HTMLElement)
-    expect(card.getByText('※降水の％は今日の最大値です。')).toBeVisible()
+    const dailyProbabilityNote = card.getByText('※降水の％は今日の最大値です。')
+    expect(dailyProbabilityNote).toBeVisible()
+    expect(dailyProbabilityNote.closest('.card-heading')).not.toBeNull()
     expect(card.getByText('※時間別の％は直前1時間の降水確率です。')).not.toBeVisible()
 
     await user.click(card.getByText('この先6時間', { exact: true }))
     expect(card.getByText('※時間別の％は直前1時間の降水確率です。')).toBeVisible()
+  })
+
+  it('天気データの取得前は日最大降水確率の注記を表示しない', () => {
+    render(<App initialNow={fixedNow} initialMode="idle" />)
+
+    expect(screen.getByRole('heading', { level: 2, name: '天気' })).toBeVisible()
+    expect(screen.queryByText('※降水の％は今日の最大値です。')).not.toBeInTheDocument()
   })
 
   it('最寄り駅と次候補のそれぞれから地図を開ける', async () => {
