@@ -368,9 +368,11 @@ function PreviewDashboard() {
             <div><dt>降水</dt><dd>20%</dd></div>
           </dl>
         </div>
+        <p className="weather-daily-probability-note">※降水の％は今日の最大値です。</p>
         <details className="card-details">
           <summary>この先6時間</summary>
           <HourlyForecast hours={previewHourlyWeather} />
+          <p className="weather-hourly-probability-note">※時間別の％は直前1時間の降水確率です。</p>
         </details>
       </DashboardCard>
 
@@ -732,10 +734,12 @@ function LiveDashboard({
                 <div><dt>降水</dt><dd>{Math.round(weather.precipitationProbabilityMax)}%</dd></div>
               </dl>
             </div>
+            <p className="weather-daily-probability-note">※降水の％は今日の最大値です。</p>
             {weather.nextSixHours.length > 0 && (
               <details className="card-details">
                 <summary>この先6時間</summary>
                 <HourlyForecast hours={weather.nextSixHours} />
+                <p className="weather-hourly-probability-note">※時間別の％は直前1時間の降水確率です。</p>
               </details>
             )}
           </>

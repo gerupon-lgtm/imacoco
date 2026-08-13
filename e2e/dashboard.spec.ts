@@ -382,11 +382,15 @@ test('表示色モードをライト・ダーク・自動から選んで保存�
 
 test('この先6時間に時間ごとの天気状態を表示する', async ({ page }) => {
   await page.goto('/?preview=1')
-  await page.getByText('この先6時間', { exact: true }).click()
+  const weatherCard = page.locator('[data-card-id="weather"]')
+  await expect(weatherCard.getByText('※降水の％は今日の最大値です。')).toBeVisible()
+  await expect(weatherCard.getByText('※時間別の％は直前1時間の降水確率です。')).not.toBeVisible()
+  await weatherCard.getByText('この先6時間', { exact: true }).click()
 
-  const hourlyConditions = page.locator('.hourly-forecast .hourly-condition')
+  const hourlyConditions = weatherCard.locator('.hourly-forecast .hourly-condition')
   await expect(hourlyConditions).toHaveCount(6)
   await expect(hourlyConditions).toHaveText(['晴れ', '晴れ', 'くもり', '雨', '雨', 'くもり'])
+  await expect(weatherCard.getByText('※時間別の％は直前1時間の降水確率です。')).toBeVisible()
 })
 
 test('太陽と潮の時刻を同じ左右位置に揃える', async ({ page }) => {
@@ -796,7 +800,7 @@ test('測位できない再訪時は24時間以内の前回位置を明示して
   await expect(page.getByText('前回の位置', { exact: true })).toBeVisible()
   const footerStatus = page.locator('.footer-meta')
   await expect(footerStatus.getByText('一部に15分以内の保存済み情報を表示しています', { exact: true })).toHaveCount(1)
-  await expect(footerStatus).toContainText('mvp-0.2.2')
+  await expect(footerStatus).toContainText('mvp-0.2.3')
   await expect(page.getByText('現在地を取得できないため、24時間以内の前回位置を表示しています')).toBeVisible()
 })
 
@@ -957,5 +961,5 @@ test('天気の気温補足値を一列に揃え、MVP版を表示する', async
     Math.max(...temperatureValueTops) - Math.min(...temperatureValueTops),
     `weather temperature value tops: ${JSON.stringify(temperatureValueTops)}`
   ).toBeLessThanOrEqual(1)
-  await expect.soft(page.locator('.app-footer')).toContainText('mvp-0.2.2')
+  await expect.soft(page.locator('.app-footer')).toContainText('mvp-0.2.3')
 })
