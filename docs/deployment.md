@@ -6,7 +6,7 @@
 - 本番ブランチ: `main`
 - 修正ブランチ: 作業ごとのfeature／fixブランチからPRを作成
 - 初回公開PR: `#1`（マージ済み）
-- アプリ版: `mvp-0.2.5`
+- アプリ版: `mvp-0.2.6`
 - 本番公開: `https://imacoco.sikumilab.com/`（Cloudflare Pages）
 
 Cloudflare PagesのGitHub連携と独自ドメイン設定は完了済み。今後の修正はPRのCIとPreview確認後に`main`へマージする。

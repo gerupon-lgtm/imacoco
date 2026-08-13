@@ -417,18 +417,28 @@ test('この先6時間に時間ごとの天気状態を表示する', async ({ p
   await expect(weatherCard.getByText('※時間別の％は直前1時間の降水確率です。')).toBeVisible()
 })
 
-test('スマホだけ現在気温を少し小さく表示する', async ({ page }) => {
-  for (const { width, expectedFontSize } of [
-    { width: 390, expectedFontSize: 34 },
-    { width: 900, expectedFontSize: 40 },
+test('スマホでは現在気温だけを元の大きさで少し下げる', async ({ page }) => {
+  for (const { width, expectedFontSize, expectedTemperatureTop } of [
+    { width: 390, expectedFontSize: 36, expectedTemperatureTop: '2px' },
+    { width: 900, expectedFontSize: 40, expectedTemperatureTop: 'auto' },
   ]) {
     await page.setViewportSize({ width, height: 900 })
     await page.goto('/?preview=1')
 
-    const fontSize = await page.locator('.weather-main strong').evaluate((temperature) =>
-      Number.parseFloat(getComputedStyle(temperature).fontSize)
-    )
-    expect(fontSize).toBe(expectedFontSize)
+    const styles = await page.locator('.weather-current-copy').evaluate((copy) => {
+      const temperature = copy.querySelector('strong')!
+      const condition = copy.querySelector('.weather-condition')!
+      const temperatureStyle = getComputedStyle(temperature)
+      const conditionStyle = getComputedStyle(condition)
+      return {
+        fontSize: Number.parseFloat(temperatureStyle.fontSize),
+        temperatureTop: temperatureStyle.top,
+        conditionTop: conditionStyle.top,
+      }
+    })
+    expect(styles.fontSize).toBe(expectedFontSize)
+    expect(styles.temperatureTop).toBe(expectedTemperatureTop)
+    expect(styles.conditionTop).toBe('auto')
   }
 })
 
@@ -615,7 +625,7 @@ test('正式アイコンと控えめな文字サイズで現在地への地図�
   expect(metrics.cardTitleIconWidth).toBe(30)
   expect(metrics.weatherIconWidth).toBeLessThanOrEqual(60)
   expect(metrics.temperatureFontSize).toBeLessThanOrEqual(40)
-  expect(metrics.weatherTopDifference).toBeLessThanOrEqual(1)
+  expect(metrics.weatherTopDifference).toBeLessThanOrEqual(2)
   expect(metrics.weatherCopyHeightDifference).toBeLessThanOrEqual(1)
   expect(metrics.temperatureUnitWeight).toBe(400)
   expect(Math.max(...metrics.compactCardContentGaps), JSON.stringify(metrics.compactCardContentGaps)).toBeLessThanOrEqual(4)
@@ -839,7 +849,7 @@ test('測位できない再訪時は24時間以内の前回位置を明示して
   await expect(page.getByText('前回の位置', { exact: true })).toBeVisible()
   const footerStatus = page.locator('.footer-meta')
   await expect(footerStatus.getByText('一部に15分以内の保存済み情報を表示しています', { exact: true })).toHaveCount(1)
-  await expect(footerStatus).toContainText('mvp-0.2.5')
+  await expect(footerStatus).toContainText('mvp-0.2.6')
   await expect(page.getByText('現在地を取得できないため、24時間以内の前回位置を表示しています')).toBeVisible()
 })
 
@@ -1000,5 +1010,5 @@ test('天気の気温補足値を一列に揃え、MVP版を表示する', async
     Math.max(...temperatureValueTops) - Math.min(...temperatureValueTops),
     `weather temperature value tops: ${JSON.stringify(temperatureValueTops)}`
   ).toBeLessThanOrEqual(1)
-  await expect.soft(page.locator('.app-footer')).toContainText('mvp-0.2.5')
+  await expect.soft(page.locator('.app-footer')).toContainText('mvp-0.2.6')
 })
