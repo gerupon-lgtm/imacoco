@@ -771,6 +771,18 @@ a {
   color: var(--muted);
 }
 
+.weather-daily-probability-note,
+.weather-hourly-probability-note {
+  margin: 8px 0 0;
+  color: var(--info-note);
+  font-size: var(--annotation-font-size);
+  line-height: var(--annotation-line-height);
+}
+
+.weather-daily-probability-note {
+  text-align: right;
+}
+
 .warm { color: #f54a3f; }
 .cool { color: #078bd1; }
 
