@@ -29,20 +29,19 @@ const responseFixture = {
   hourly: {
     time: [1_786_419_600, 1_786_423_200, 1_786_426_800, 1_786_430_400, 1_786_434_000, 1_786_437_600, 1_786_441_200, 1_786_444_800],
     temperature_2m: [23, 25, 26, 27, 26, 24, 23, 22],
-    precipitation_probability: [10, 20, 30, 40, 30, 20, 10, 10],
+    precipitation: [0, 0.1, 0.2, 0.6, 3.4, 1.2, 0, 0],
     weather_code: [1, 2, 2, 3, 61, 61, 2, 1]
   },
   hourly_units: {
     time: 'unixtime',
     temperature_2m: '°C',
-    precipitation_probability: '%',
+    precipitation: 'mm',
     weather_code: 'wmo code'
   },
   daily: {
     time: [1_786_388_400, 1_786_474_800],
     temperature_2m_max: [27, 28],
     temperature_2m_min: [19, 20],
-    precipitation_probability_max: [40, 50],
     sunrise: [1_786_406_520, 1_786_493_000],
     sunset: [1_786_454_820, 1_786_541_160]
   },
@@ -50,7 +49,6 @@ const responseFixture = {
     time: 'unixtime',
     temperature_2m_max: '°C',
     temperature_2m_min: '°C',
-    precipitation_probability_max: '%',
     sunrise: 'unixtime',
     sunset: 'unixtime'
   }
@@ -63,7 +61,8 @@ describe('Open-Meteo weather provider', () => {
     expect(url.searchParams.get('latitude')).toBe('35.68')
     expect(url.searchParams.get('longitude')).toBe('139.77')
     expect(url.searchParams.get('current')).toBe('temperature_2m,apparent_temperature,weather_code')
-    expect(url.searchParams.get('hourly')).toBe('temperature_2m,precipitation_probability,weather_code')
+    expect(url.searchParams.get('hourly')).toBe('temperature_2m,precipitation,weather_code')
+    expect(url.searchParams.get('daily')).not.toContain('precipitation_probability_max')
     expect(url.searchParams.get('daily')).toContain('sunrise,sunset')
     expect(url.searchParams.get('forecast_days')).toBe('2')
     expect(url.searchParams.get('timezone')).toBe('Asia/Tokyo')
@@ -84,7 +83,7 @@ describe('Open-Meteo weather provider', () => {
       apparentTemperatureC: 25.1,
       todayMaxC: 27,
       todayMinC: 19,
-      precipitationProbabilityMax: 40,
+      todayMaxHourlyPrecipitationMm: 3.4,
       elevationMeters: 10,
       modelCoordinates: { latitude: 35.68, longitude: 139.77 },
       fetchedAt: '2026-08-11T05:31:05.000Z'
@@ -93,7 +92,7 @@ describe('Open-Meteo weather provider', () => {
     expect(result.weather.nextSixHours[0]).toEqual({
       at: new Date(1_786_426_800_000).toISOString(),
       temperatureC: 26,
-      precipitationProbability: 30,
+      precipitationMm: 0.2,
       weatherCode: 2,
       weatherLabel: '晴れ時々くもり'
     })

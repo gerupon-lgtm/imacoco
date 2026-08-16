@@ -132,11 +132,13 @@ IndexedDBストア: resource-cache、キー: resourceType
 | apparentTemperatureC | number | ○ | 体感温度 |
 | todayMaxC | number | ○ | 今日の最高気温 |
 | todayMinC | number | ○ | 今日の最低気温 |
-| precipitationProbabilityMax | number | ○ | 今日の最大降水確率、0〜100 |
+| todayMaxHourlyPrecipitationMm | number | ○ | 今日の時間別予想降水量の最大値（mm） |
 | elevationMeters | number | - | API格子の概算標高（m）。欠損時は標高だけを非表示にし、天気・現在地を維持 |
 | nextSixHours | HourlyWeather[] | ○ | 現在時刻以降の最大6件 |
 | modelCoordinates | Coordinates | ○ | APIが使用した格子中心 |
 | fetchedAt | ISO日時 | ○ | 取得時刻 |
+
+`HourlyWeather.precipitationMm`は表示時刻までの直前1時間の予想降水量（mm）とする。降水確率は保存・表示しない。旧形式の天気キャッシュは読込時に不適合として削除し、新規取得する。
 
 ### 5.3 SolarSummary
 

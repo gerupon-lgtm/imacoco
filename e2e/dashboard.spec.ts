@@ -151,19 +151,18 @@ test('初回説明からGPS・地名・天気を順次表示する', async ({ pa
         hourly: {
           time: [1_786_419_600, 1_786_423_200, 1_786_426_800, 1_786_430_400, 1_786_434_000, 1_786_437_600, 1_786_441_200],
           temperature_2m: [23, 25, 26, 27, 26, 24, 23],
-          precipitation_probability: [10, 20, 30, 40, 30, 20, 10],
+          precipitation: [0, 0.1, 0.2, 0.6, 3.4, 1.2, 0],
           weather_code: [1, 2, 2, 3, 61, 61, 2]
         },
-        hourly_units: { time: 'unixtime', temperature_2m: '°C', precipitation_probability: '%', weather_code: 'wmo code' },
+        hourly_units: { time: 'unixtime', temperature_2m: '°C', precipitation: 'mm', weather_code: 'wmo code' },
         daily: {
           time: [1_786_374_000, 1_786_460_400],
           temperature_2m_max: [27, 28],
           temperature_2m_min: [19, 20],
-          precipitation_probability_max: [40, 50],
           sunrise: [1_786_391_797, 1_786_478_244],
           sunset: [1_786_440_957, 1_786_527_292]
         },
-        daily_units: { time: 'unixtime', temperature_2m_max: '°C', temperature_2m_min: '°C', precipitation_probability_max: '%', sunrise: 'unixtime', sunset: 'unixtime' }
+        daily_units: { time: 'unixtime', temperature_2m_max: '°C', temperature_2m_min: '°C', sunrise: 'unixtime', sunset: 'unixtime' }
       }
     })
   })
@@ -380,17 +379,19 @@ test('表示色モードをライト・ダーク・自動から選んで保存�
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'system')
 })
 
-test('この先6時間に時間ごとの天気状態を表示する', async ({ page }) => {
+test('今日の最大雨量とこの先6時間の天気・予想降水量を表示する', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 900 })
   await page.goto('/?preview=1')
   const weatherCard = page.locator('[data-card-id="weather"]')
-  const dailyProbabilityNote = weatherCard.getByText('※降水の％は今日の最大値です。')
-  await expect(dailyProbabilityNote).toBeVisible()
-  await expect(weatherCard.getByText('※時間別の％は直前1時間の降水確率です。')).not.toBeVisible()
+  const dailyPrecipitationNote = weatherCard.getByText('※今日の最大1時間予想降水量です。')
+  await expect(dailyPrecipitationNote).toBeVisible()
+  await expect(weatherCard.getByText('最大雨量')).toBeVisible()
+  await expect(weatherCard.locator('.weather-details dd').last()).toHaveText('3.4mm')
+  await expect(weatherCard.getByText('※時間別の降水量は直前1時間の予想値です。')).not.toBeVisible()
 
   const headingLayout = await weatherCard.locator('.card-heading').evaluate((heading) => {
     const title = heading.querySelector('h2')
-    const note = heading.querySelector('.weather-daily-probability-note')
+    const note = heading.querySelector('.weather-daily-precipitation-note')
     if (!(title instanceof HTMLElement) || !(note instanceof HTMLElement)) return null
     const titleRect = title.getBoundingClientRect()
     const noteRect = note.getBoundingClientRect()
@@ -414,7 +415,10 @@ test('この先6時間に時間ごとの天気状態を表示する', async ({ p
   const hourlyConditions = weatherCard.locator('.hourly-forecast .hourly-condition')
   await expect(hourlyConditions).toHaveCount(6)
   await expect(hourlyConditions).toHaveText(['晴れ', '晴れ', 'くもり', '雨', '雨', 'くもり'])
-  await expect(weatherCard.getByText('※時間別の％は直前1時間の降水確率です。')).toBeVisible()
+  await expect(weatherCard.locator('.hourly-forecast > div > span:last-child')).toHaveText([
+    '0.0mm', '0.0mm', '0.2mm', '1.8mm', '3.4mm', '0.0mm'
+  ])
+  await expect(weatherCard.getByText('※時間別の降水量は直前1時間の予想値です。')).toBeVisible()
 })
 
 test('スマホでは現在気温だけを元の大きさで少し下げる', async ({ page }) => {
@@ -849,7 +853,7 @@ test('測位できない再訪時は24時間以内の前回位置を明示して
   await expect(page.getByText('前回の位置', { exact: true })).toBeVisible()
   const footerStatus = page.locator('.footer-meta')
   await expect(footerStatus.getByText('一部に15分以内の保存済み情報を表示しています', { exact: true })).toHaveCount(1)
-  await expect(footerStatus).toContainText('mvp-0.2.6')
+  await expect(footerStatus).toContainText('mvp-0.3.0')
   await expect(page.getByText('現在地を取得できないため、24時間以内の前回位置を表示しています')).toBeVisible()
 })
 
@@ -1010,5 +1014,5 @@ test('天気の気温補足値を一列に揃え、MVP版を表示する', async
     Math.max(...temperatureValueTops) - Math.min(...temperatureValueTops),
     `weather temperature value tops: ${JSON.stringify(temperatureValueTops)}`
   ).toBeLessThanOrEqual(1)
-  await expect.soft(page.locator('.app-footer')).toContainText('mvp-0.2.6')
+  await expect.soft(page.locator('.app-footer')).toContainText('mvp-0.3.0')
 })

@@ -771,14 +771,14 @@ a {
   color: var(--muted);
 }
 
-.weather-daily-probability-note,
-.weather-hourly-probability-note {
+.weather-daily-precipitation-note,
+.weather-hourly-precipitation-note {
   color: var(--info-note);
   font-size: var(--annotation-font-size);
   line-height: var(--annotation-line-height);
 }
 
-.weather-daily-probability-note {
+.weather-daily-precipitation-note {
   margin: 0 0 0 auto;
   font-size: clamp(0.64rem, 3vw, var(--annotation-font-size));
   line-height: 1.35;
@@ -786,7 +786,7 @@ a {
   white-space: nowrap;
 }
 
-.weather-hourly-probability-note {
+.weather-hourly-precipitation-note {
   margin: 8px 0 0;
 }
 

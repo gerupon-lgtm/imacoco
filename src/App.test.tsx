@@ -35,7 +35,7 @@ const weatherSummary = {
     apparentTemperatureC: 25.1,
     todayMaxC: 27,
     todayMinC: 19,
-    precipitationProbabilityMax: 20,
+    todayMaxHourlyPrecipitationMm: 3.4,
     elevationMeters: 10,
     nextSixHours: [],
     modelCoordinates: { latitude: 35.68, longitude: 139.77 },
@@ -100,7 +100,7 @@ describe('現在地ダッシュボード', () => {
     ])
   })
 
-  it('降水確率の対象期間を6時間予報の開閉状態に合わせて案内する', async () => {
+  it('予想降水量の対象期間を6時間予報の開閉状態に合わせて案内する', async () => {
     const user = userEvent.setup()
     render(<App initialNow={fixedNow} initialMode="preview" />)
 
@@ -109,20 +109,20 @@ describe('現在地ダッシュボード', () => {
     expect(weatherCard).not.toBeNull()
 
     const card = within(weatherCard as HTMLElement)
-    const dailyProbabilityNote = card.getByText('※降水の％は今日の最大値です。')
-    expect(dailyProbabilityNote).toBeVisible()
-    expect(dailyProbabilityNote.closest('.card-heading')).not.toBeNull()
-    expect(card.getByText('※時間別の％は直前1時間の降水確率です。')).not.toBeVisible()
+    const dailyPrecipitationNote = card.getByText('※今日の最大1時間予想降水量です。')
+    expect(dailyPrecipitationNote).toBeVisible()
+    expect(dailyPrecipitationNote.closest('.card-heading')).not.toBeNull()
+    expect(card.getByText('※時間別の降水量は直前1時間の予想値です。')).not.toBeVisible()
 
     await user.click(card.getByText('この先6時間', { exact: true }))
-    expect(card.getByText('※時間別の％は直前1時間の降水確率です。')).toBeVisible()
+    expect(card.getByText('※時間別の降水量は直前1時間の予想値です。')).toBeVisible()
   })
 
-  it('天気データの取得前は日最大降水確率の注記を表示しない', () => {
+  it('天気データの取得前は日最大1時間予想降水量の注記を表示しない', () => {
     render(<App initialNow={fixedNow} initialMode="idle" />)
 
     expect(screen.getByRole('heading', { level: 2, name: '天気' })).toBeVisible()
-    expect(screen.queryByText('※降水の％は今日の最大値です。')).not.toBeInTheDocument()
+    expect(screen.queryByText('※今日の最大1時間予想降水量です。')).not.toBeInTheDocument()
   })
 
   it('最寄り駅と次候補のそれぞれから地図を開ける', async () => {

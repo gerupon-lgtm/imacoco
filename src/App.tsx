@@ -188,9 +188,17 @@ function isPlaceSummary(value: unknown): value is PlaceSummary {
 function isOpenMeteoSummary(value: unknown): value is OpenMeteoSummary {
   if (!value || typeof value !== 'object') return false
   const candidate = value as Partial<OpenMeteoSummary>
+  const isPrecipitationAmount = (amount: unknown) =>
+    typeof amount === 'number' && Number.isFinite(amount) && amount >= 0
   return Boolean(
     candidate.weather &&
     typeof candidate.weather.temperatureC === 'number' &&
+    isPrecipitationAmount(candidate.weather.todayMaxHourlyPrecipitationMm) &&
+    Array.isArray(candidate.weather.nextSixHours) &&
+    candidate.weather.nextSixHours.every((hour) => Boolean(
+      hour && typeof hour === 'object' &&
+      isPrecipitationAmount((hour as Partial<HourlyWeather>).precipitationMm)
+    )) &&
     candidate.solar &&
     typeof candidate.solar.sunriseAt === 'string'
   )
@@ -285,13 +293,17 @@ const previewStationSummary: StationSummary = {
 }
 
 const previewHourlyWeather: HourlyWeather[] = [
-  { at: '2026-08-11T23:00:00.000Z', temperatureC: 26, precipitationProbability: 60, weatherCode: 0, weatherLabel: '快晴' },
-  { at: '2026-08-12T00:00:00.000Z', temperatureC: 25, precipitationProbability: 82, weatherCode: 1, weatherLabel: '晴れ' },
-  { at: '2026-08-12T01:00:00.000Z', temperatureC: 25, precipitationProbability: 91, weatherCode: 3, weatherLabel: 'くもり' },
-  { at: '2026-08-12T02:00:00.000Z', temperatureC: 26, precipitationProbability: 93, weatherCode: 61, weatherLabel: '雨' },
-  { at: '2026-08-12T03:00:00.000Z', temperatureC: 26, precipitationProbability: 94, weatherCode: 80, weatherLabel: 'にわか雨' },
-  { at: '2026-08-12T04:00:00.000Z', temperatureC: 27, precipitationProbability: 78, weatherCode: 2, weatherLabel: '晴れ時々くもり' }
+  { at: '2026-08-11T23:00:00.000Z', temperatureC: 26, precipitationMm: 0, weatherCode: 0, weatherLabel: '快晴' },
+  { at: '2026-08-12T00:00:00.000Z', temperatureC: 25, precipitationMm: 0, weatherCode: 1, weatherLabel: '晴れ' },
+  { at: '2026-08-12T01:00:00.000Z', temperatureC: 25, precipitationMm: 0.2, weatherCode: 3, weatherLabel: 'くもり' },
+  { at: '2026-08-12T02:00:00.000Z', temperatureC: 26, precipitationMm: 1.8, weatherCode: 61, weatherLabel: '雨' },
+  { at: '2026-08-12T03:00:00.000Z', temperatureC: 26, precipitationMm: 3.4, weatherCode: 80, weatherLabel: 'にわか雨' },
+  { at: '2026-08-12T04:00:00.000Z', temperatureC: 27, precipitationMm: 0, weatherCode: 2, weatherLabel: '晴れ時々くもり' }
 ]
+
+function formatPrecipitationMm(value: number) {
+  return `${value.toFixed(1)}mm`
+}
 
 function HourlyForecast({ hours }: { hours: HourlyWeather[] }) {
   return (
@@ -303,12 +315,12 @@ function HourlyForecast({ hours }: { hours: HourlyWeather[] }) {
           <div
             key={hour.at}
             role="group"
-            aria-label={`${timeLabel}、気温${Math.round(hour.temperatureC)}℃、${conditionLabel}、降水確率${hour.precipitationProbability}%`}
+            aria-label={`${timeLabel}、気温${Math.round(hour.temperatureC)}℃、${conditionLabel}、予想降水量${formatPrecipitationMm(hour.precipitationMm)}`}
           >
             <time dateTime={hour.at}>{timeLabel}</time>
             <span>{Math.round(hour.temperatureC)}℃</span>
             <span className="hourly-condition">{conditionLabel}</span>
-            <span>{hour.precipitationProbability}%</span>
+            <span>{formatPrecipitationMm(hour.precipitationMm)}</span>
           </div>
         )
       })}
@@ -356,7 +368,7 @@ function PreviewDashboard() {
         id="weather"
         title="天気"
         icon={<AppIcon name="sun" />}
-        headingMeta={<p className="weather-daily-probability-note">※降水の％は今日の最大値です。</p>}
+        headingMeta={<p className="weather-daily-precipitation-note">※今日の最大1時間予想降水量です。</p>}
       >
         <div className="weather-grid">
           <div className="weather-main">
@@ -370,13 +382,13 @@ function PreviewDashboard() {
             <div><dt>体感</dt><dd>25.1℃</dd></div>
             <div><dt>最高</dt><dd className="warm">27℃</dd></div>
             <div><dt>最低</dt><dd className="cool">19℃</dd></div>
-            <div><dt>降水</dt><dd>20%</dd></div>
+            <div><dt>最大雨量</dt><dd>3.4mm</dd></div>
           </dl>
         </div>
         <details className="card-details">
           <summary>この先6時間</summary>
           <HourlyForecast hours={previewHourlyWeather} />
-          <p className="weather-hourly-probability-note">※時間別の％は直前1時間の降水確率です。</p>
+          <p className="weather-hourly-precipitation-note">※時間別の降水量は直前1時間の予想値です。</p>
         </details>
       </DashboardCard>
 
@@ -725,7 +737,7 @@ function LiveDashboard({
         title="天気"
         icon={<AppIcon name="sun" />}
         headingMeta={weather
-          ? <p className="weather-daily-probability-note">※降水の％は今日の最大値です。</p>
+          ? <p className="weather-daily-precipitation-note">※今日の最大1時間予想降水量です。</p>
           : undefined}
       >
         {weather ? (
@@ -742,14 +754,14 @@ function LiveDashboard({
                 <div><dt>体感</dt><dd>{weather.apparentTemperatureC.toFixed(1)}℃</dd></div>
                 <div><dt>最高</dt><dd className="warm">{Math.round(weather.todayMaxC)}℃</dd></div>
                 <div><dt>最低</dt><dd className="cool">{Math.round(weather.todayMinC)}℃</dd></div>
-                <div><dt>降水</dt><dd>{Math.round(weather.precipitationProbabilityMax)}%</dd></div>
+                <div><dt>最大雨量</dt><dd>{formatPrecipitationMm(weather.todayMaxHourlyPrecipitationMm)}</dd></div>
               </dl>
             </div>
             {weather.nextSixHours.length > 0 && (
               <details className="card-details">
                 <summary>この先6時間</summary>
                 <HourlyForecast hours={weather.nextSixHours} />
-                <p className="weather-hourly-probability-note">※時間別の％は直前1時間の降水確率です。</p>
+                <p className="weather-hourly-precipitation-note">※時間別の降水量は直前1時間の予想値です。</p>
               </details>
             )}
           </>

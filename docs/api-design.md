@@ -131,8 +131,8 @@ GET https://api.open-meteo.com/v1/forecast
 |---|---|
 | latitude / longitude | 丸めた座標 |
 | current | temperature_2m,apparent_temperature,weather_code |
-| hourly | temperature_2m,precipitation_probability,weather_code |
-| daily | temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset |
+| hourly | temperature_2m,precipitation,weather_code |
+| daily | temperature_2m_max,temperature_2m_min,sunrise,sunset |
 | forecast_days | 2 |
 | timezone | Asia/Tokyo |
 | timeformat | unixtime |
@@ -143,6 +143,7 @@ GET https://api.open-meteo.com/v1/forecast
 - 現在のUnix秒以降から6時間分を選ぶ。
 - Unix秒をUTC ISO 8601へ変換して保存し、表示時にJSTへ変換する。
 - 今日の行は端末の現在瞬間をAsia/Tokyoへ変換したローカル日付で選ぶ。
+- `hourly.precipitation`は表示時刻までの直前1時間の予想降水量として保持する。同じJST日に属する時間別値の最大を今日の最大1時間予想降水量とし、確率へ換算しない。
 - 日の出・日の入りは同じ応答からSolarSummaryへ分離する。
 - ルート応答の`elevation`を有限数として検証し、WeatherSummary.elevationMetersへ保持する。90m解像度の地形モデル由来なので整数mへ丸め、「約」「概算」を付けて現在地カードへ表示する。
 - `elevation`欠損・不正時は概算標高だけを非表示にし、天気、太陽、現在地カードの既存情報を失敗させない。標高専用APIは呼び出さない。

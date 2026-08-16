@@ -6,7 +6,7 @@ import { formatJstLocalDate, unixSecondsToUtcIso } from '../domain/time'
 const OPEN_METEO_URL = 'https://api.open-meteo.com/v1/forecast'
 
 const finiteNumber = z.number().finite()
-const probability = finiteNumber.min(0).max(100)
+const precipitationAmount = finiteNumber.nonnegative()
 const weatherCode = z.number().int()
 
 const openMeteoResponseSchema = z.object({
@@ -30,20 +30,19 @@ const openMeteoResponseSchema = z.object({
   hourly: z.object({
     time: z.array(finiteNumber),
     temperature_2m: z.array(finiteNumber),
-    precipitation_probability: z.array(probability),
+    precipitation: z.array(precipitationAmount),
     weather_code: z.array(weatherCode)
   }),
   hourly_units: z.object({
     time: z.literal('unixtime'),
     temperature_2m: z.literal('°C'),
-    precipitation_probability: z.literal('%'),
+    precipitation: z.literal('mm'),
     weather_code: z.literal('wmo code')
   }),
   daily: z.object({
     time: z.array(finiteNumber),
     temperature_2m_max: z.array(finiteNumber),
     temperature_2m_min: z.array(finiteNumber),
-    precipitation_probability_max: z.array(probability),
     sunrise: z.array(finiteNumber),
     sunset: z.array(finiteNumber)
   }).optional(),
@@ -51,7 +50,6 @@ const openMeteoResponseSchema = z.object({
     time: z.literal('unixtime'),
     temperature_2m_max: z.literal('°C'),
     temperature_2m_min: z.literal('°C'),
-    precipitation_probability_max: z.literal('%'),
     sunrise: z.literal('unixtime'),
     sunset: z.literal('unixtime')
   })
@@ -62,7 +60,7 @@ const elevationResponseSchema = z.object({ elevation: finiteNumber.optional() })
 export type HourlyWeather = {
   at: string
   temperatureC: number
-  precipitationProbability: number
+  precipitationMm: number
   weatherCode: number
   weatherLabel: string
 }
@@ -74,7 +72,7 @@ export type WeatherSummary = {
   apparentTemperatureC: number
   todayMaxC: number
   todayMinC: number
-  precipitationProbabilityMax: number
+  todayMaxHourlyPrecipitationMm: number
   elevationMeters?: number
   nextSixHours: HourlyWeather[]
   modelCoordinates: Coordinates
@@ -150,10 +148,10 @@ export function buildOpenMeteoUrl(coordinates: Coordinates) {
   url.searchParams.set('latitude', coordinates.latitude.toFixed(2))
   url.searchParams.set('longitude', coordinates.longitude.toFixed(2))
   url.searchParams.set('current', 'temperature_2m,apparent_temperature,weather_code')
-  url.searchParams.set('hourly', 'temperature_2m,precipitation_probability,weather_code')
+  url.searchParams.set('hourly', 'temperature_2m,precipitation,weather_code')
   url.searchParams.set(
     'daily',
-    'temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset'
+    'temperature_2m_max,temperature_2m_min,sunrise,sunset'
   )
   url.searchParams.set('forecast_days', '2')
   url.searchParams.set('timezone', 'Asia/Tokyo')
@@ -187,14 +185,13 @@ export function normalizeOpenMeteoResponse(
   assertEqualArrayLengths([
     data.hourly.time,
     data.hourly.temperature_2m,
-    data.hourly.precipitation_probability,
+    data.hourly.precipitation,
     data.hourly.weather_code
   ])
   assertEqualArrayLengths([
     data.daily.time,
     data.daily.temperature_2m_max,
     data.daily.temperature_2m_min,
-    data.daily.precipitation_probability_max,
     data.daily.sunrise,
     data.daily.sunset
   ])
@@ -205,6 +202,14 @@ export function normalizeOpenMeteoResponse(
   )
   if (todayIndex < 0) throw new WeatherProviderError('WEATHER_NO_DAILY')
 
+  const todayHourlyPrecipitation = data.hourly.time
+    .map((time, index) => ({ time, precipitationMm: data.hourly.precipitation[index] }))
+    .filter(({ time }) => localDateFromDailyUnix(time, data.utc_offset_seconds) === localDate)
+    .map(({ precipitationMm }) => precipitationMm)
+  if (todayHourlyPrecipitation.length === 0) {
+    throw new WeatherProviderError('WEATHER_NO_DAILY')
+  }
+
   const nowUnixSeconds = currentInstant.getTime() / 1_000
   const nextSixHours = data.hourly.time
     .map((time, index) => ({ time, index }))
@@ -213,7 +218,7 @@ export function normalizeOpenMeteoResponse(
     .map(({ time, index }) => ({
       at: unixSecondsToUtcIso(time),
       temperatureC: data.hourly.temperature_2m[index],
-      precipitationProbability: data.hourly.precipitation_probability[index],
+      precipitationMm: data.hourly.precipitation[index],
       weatherCode: data.hourly.weather_code[index],
       weatherLabel: weatherCodeLabel(data.hourly.weather_code[index])
     }))
@@ -228,7 +233,7 @@ export function normalizeOpenMeteoResponse(
       apparentTemperatureC: data.current.apparent_temperature,
       todayMaxC: data.daily.temperature_2m_max[todayIndex],
       todayMinC: data.daily.temperature_2m_min[todayIndex],
-      precipitationProbabilityMax: data.daily.precipitation_probability_max[todayIndex],
+      todayMaxHourlyPrecipitationMm: Math.max(...todayHourlyPrecipitation),
       ...(elevationMeters === undefined ? {} : { elevationMeters }),
       nextSixHours,
       modelCoordinates: { latitude: data.latitude, longitude: data.longitude },
