@@ -1,0 +1,78 @@
+name: Update Japanese holidays
+
+on:
+  schedule:
+    - cron: '17 3 1 * *'
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    outputs:
+      changed: ${{ steps.changes.outputs.changed }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run test:holidays
+      - run: npm run data:holidays
+      - id: changes
+        shell: bash
+        run: |
+          if git diff --quiet -- src/data/japaneseHolidays.generated.json; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.changes.outputs.changed == 'true'
+        run: npm run check
+      - if: steps.changes.outputs.changed == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: japanese-holidays
+          path: src/data/japaneseHolidays.generated.json
+          if-no-files-found: error
+          retention-days: 1
+
+  propose:
+    needs: verify
+    if: needs.verify.outputs.changed == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/download-artifact@v4
+        with:
+          name: japanese-holidays
+          path: src/data
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          test "$(git status --short | wc -l)" -eq 1
+          git status --short | grep -Fx " M src/data/japaneseHolidays.generated.json"
+          branch="automation/update-holidays-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$branch"
+          git add src/data/japaneseHolidays.generated.json
+          git commit -m "data 日本の祝日を更新"
+          git push origin "$branch"
+          gh pr create \
+            --base main \
+            --head "$branch" \
+            --title "data 日本の祝日を更新" \
+            --body "内閣府の公式CSVに変更を検出したため、同梱する祝日データを更新します。\n\n- Source: https://www8.cao.go.jp/chosei/shukujitsu/syukujitsu.csv\n- Validation: npm run check"

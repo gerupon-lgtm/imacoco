@@ -78,6 +78,8 @@ describe('現在地ダッシュボード', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'いまここインフォ' })).toBeVisible()
     expect(screen.getByText('© 2026 SIKUMI LAB')).toBeVisible()
     expect(screen.getByText('2026年8月11日（火）')).toBeVisible()
+    expect(screen.getByText('山の日', { selector: '.holiday-name' })).toBeInTheDocument()
+    expect(screen.getByLabelText('祝日：山の日')).toHaveTextContent('祝')
     expect(screen.getByText('14:32', { selector: '.current-clock' })).toBeVisible()
     expect(screen.getByText('標高 約10m（概算）')).toBeVisible()
   })

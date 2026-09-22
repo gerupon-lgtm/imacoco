@@ -1,7 +1,7 @@
 {
   "name": "imakoko-info",
   "private": true,
-  "version": "0.3.0",
+  "version": "0.4.0",
   "type": "module",
   "engines": {
     "node": ">=24 <25"
@@ -15,6 +15,9 @@
     "test:e2e": "playwright test",
     "icons:generate": "node scripts/generate-pwa-icons.mjs",
     "data:municipalities": "node scripts/generate-gsi-municipalities.mjs",
+    "data:holidays": "node scripts/generate-holidays.mjs",
+    "data:holidays:check": "node scripts/generate-holidays.mjs --check",
+    "test:holidays": "node --test scripts/holidays-lib.test.mjs",
     "data:stations": "node scripts/generate-stations.mjs",
     "data:medical": "node scripts/generate-medical.mjs",
     "data:government": "node scripts/generate-government.mjs",
@@ -22,7 +25,7 @@
     "version:check": "node scripts/check-version.mjs",
     "security:check": "node scripts/check-security.mjs",
     "manifest:check": "node scripts/check-pwa-manifest.mjs",
-    "check": "npm run version:check && npm run security:check && npm run data:validate && npm run typecheck && npm test && npm run build && npm run manifest:check"
+    "check": "npm run version:check && npm run security:check && npm run data:validate && npm run test:holidays && npm run typecheck && npm test && npm run build && npm run manifest:check"
   },
   "dependencies": {
     "@fontsource/kosugi": "^5.3.0",
