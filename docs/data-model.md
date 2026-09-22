@@ -322,6 +322,21 @@ StationLine:
 
 検索時はまず10kmの外接矩形と交差する0.25度グリッドだけを取得する。病院・一般診療所のどちらかが3件未満の場合だけ30kmの外接矩形との差分ファイルを追加取得し、Haversine距離で厳密に10km／30kmを絞り込む。
 
+### 6.7 JapaneseHolidayMaster
+
+ファイル: `src/data/japaneseHolidays.generated.json`（内閣府の祝日CSVから生成し、アプリ本体へ同梱）
+
+| 項目 | 型 | 必須 | 説明 |
+|---|---|---|---|
+| schemaVersion | integer | ○ | JSON形式版。現行1 |
+| sourceName | string | ○ | 内閣府の提供元表記 |
+| sourceUrl | HTTPS URL | ○ | 公式CSV |
+| coveredThrough | YYYY-MM-DD | ○ | 収録されている最終日 |
+| recordCount | integer | ○ | 祝日・休日の件数 |
+| holidays | Record<YYYY-MM-DD, string> | ○ | JST日付から祝日・休日名への対応 |
+
+CSVはShift_JISとして検証・変換する。実行時に内閣府へ通信せず、JST日付をキーに端末内で参照する。
+
 ## 7. 距離・方角
 
 - 距離はWGS84座標のHaversine直線距離とする。
@@ -340,6 +355,7 @@ StationLine:
 | 役所マスター | ビルド時生成 | 半年確認・変更時 | 旧版を表示し更新日を明示 | 新版確認後に置換 | Gitで前版復元 |
 | 駅マスター | 国土数値情報から生成 | 公式版更新時 | 基準日を明示して継続利用 | 新版確認後に置換 | Gitで前版復元 |
 | 医療マスター | 公式版から生成 | 公式版更新時 | 基準日を明示して継続利用 | 新版確認後に置換 | Gitで前版復元 |
+| 祝日マスター | 内閣府CSVから生成 | GitHub Actionsで月1回確認 | 収録終了日を出典画面へ明示 | 検証済みPRのマージで置換 | Gitで前版復元 |
 | PWA資産 | ビルド時 | 新版通知後に切替 | 旧版を破棄 | SW更新処理 | Cloudflareで前版復元 |
 
 ## 9. 保存形式の移行

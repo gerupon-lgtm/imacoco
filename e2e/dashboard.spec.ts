@@ -355,6 +355,33 @@ test('410px幅で日付と時刻を大きく保ち上下の間隔を揃える', 
   expect(metrics.dateRailFits).toBe(true)
 })
 
+test('祝日はPCで名称、スマホで祝バッジを表示して日時欄を崩さない', async ({ page }) => {
+  await page.clock.setFixedTime(new Date('2026-09-23T03:00:00.000Z'))
+
+  await page.setViewportSize({ width: 900, height: 900 })
+  await page.goto('/?preview=1')
+  await expect(page.locator('.current-date')).toHaveText('2026年9月23日（水）')
+  await expect(page.locator('.holiday-name')).toHaveText('秋分の日')
+  await expect(page.locator('.holiday-name')).toBeVisible()
+  await expect(page.locator('.holiday-badge')).toBeHidden()
+
+  await page.setViewportSize({ width: 320, height: 900 })
+  await expect(page.locator('.holiday-name')).toBeHidden()
+  await expect(page.locator('.holiday-badge')).toBeVisible()
+  await expect(page.locator('.holiday-badge')).toHaveAttribute('aria-label', '祝日：秋分の日')
+  const metrics = await page.locator('.date-rail').evaluate((element) => {
+    const date = element.querySelector<HTMLElement>('.current-date')!.getBoundingClientRect()
+    const badge = element.querySelector<HTMLElement>('.holiday-badge')!.getBoundingClientRect()
+    const clock = element.querySelector<HTMLElement>('.current-clock')!.getBoundingClientRect()
+    return {
+      fits: element.scrollWidth <= element.clientWidth,
+      sameLine: Math.abs(date.top - clock.top) <= 2 && Math.abs(badge.top - clock.top) <= 3
+    }
+  })
+  expect(metrics.fits).toBe(true)
+  expect(metrics.sameLine).toBe(true)
+})
+
 test('表示色モードをライト・ダーク・自動から選んで保存できる', async ({ page }) => {
   await page.goto('/?preview=1')
 
@@ -853,7 +880,7 @@ test('測位できない再訪時は24時間以内の前回位置を明示して
   await expect(page.getByText('前回の位置', { exact: true })).toBeVisible()
   const footerStatus = page.locator('.footer-meta')
   await expect(footerStatus.getByText('一部に15分以内の保存済み情報を表示しています', { exact: true })).toHaveCount(1)
-  await expect(footerStatus).toContainText('mvp-0.3.0')
+  await expect(footerStatus).toContainText('mvp-0.4.0')
   await expect(page.getByText('現在地を取得できないため、24時間以内の前回位置を表示しています')).toBeVisible()
 })
 
@@ -1014,5 +1041,5 @@ test('天気の気温補足値を一列に揃え、MVP版を表示する', async
     Math.max(...temperatureValueTops) - Math.min(...temperatureValueTops),
     `weather temperature value tops: ${JSON.stringify(temperatureValueTops)}`
   ).toBeLessThanOrEqual(1)
-  await expect.soft(page.locator('.app-footer')).toContainText('mvp-0.3.0')
+  await expect.soft(page.locator('.app-footer')).toContainText('mvp-0.4.0')
 })

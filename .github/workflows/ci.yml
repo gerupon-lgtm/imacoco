@@ -22,6 +22,7 @@ jobs:
       - run: npm run version:check
       - run: npm run security:check
       - run: npm run data:validate
+      - run: npm run test:holidays
       - run: npm run typecheck
       - run: npm test
       - run: npm run build

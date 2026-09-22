@@ -44,6 +44,16 @@ async function validateShardedData({ directory, manifest, expectedCount, validat
 const municipalityMaster = await readJson('src/data/municipalities.generated.json')
 assert(municipalityMaster.recordCount === Object.keys(municipalityMaster.records).length, '自治体マスターの件数が一致しません')
 
+const holidayMaster = await readJson('src/data/japaneseHolidays.generated.json')
+const holidayEntries = Object.entries(holidayMaster.holidays)
+assert(holidayMaster.schemaVersion === 1, '祝日データのスキーマ版が不正です')
+assert(holidayMaster.sourceUrl === 'https://www8.cao.go.jp/chosei/shukujitsu/syukujitsu.csv', '祝日データの出典URLが不正です')
+assert(holidayMaster.recordCount === holidayEntries.length, '祝日データの件数が一致しません')
+assert(holidayEntries.length >= 1_000, `祝日データの件数が少なすぎます: ${holidayEntries.length}`)
+assert(holidayEntries.every(([date, name]) => /^\d{4}-\d{2}-\d{2}$/.test(date) && typeof name === 'string' && name.length > 0), '祝日データに不正な日付または名称があります')
+assert(holidayMaster.coveredThrough === holidayEntries.at(-1)?.[0], '祝日データの収録終了日が一致しません')
+assert(holidayMaster.holidays['2026-09-23'] === '秋分の日', '2026年秋分の日が祝日データと一致しません')
+
 const stationManifest = await readJson('public/data/stations/manifest.json')
 assert(stationManifest.sourceFeatureCount === stationManifest.adoptedSourceRecordCount + Object.values(stationManifest.excluded).reduce((sum, value) => sum + value, 0), '駅データの採用・除外件数が原典件数と一致しません')
 assert(stationManifest.usageRestriction === 'non-commercial', '駅データの非商用条件が記録されていません')
@@ -105,4 +115,4 @@ const missingCodes = Object.keys(municipalityMaster.records).filter((code) => !l
 assert(JSON.stringify(missingCodes) === JSON.stringify([...governmentManifest.missingCurrentCodes].sort()), '役所未収録の自治体コードがmanifestと一致しません')
 assert(missingCodes.every((code) => ['1695', '1696', '1697', '1698', '1699', '1700'].includes(code)), `想定外の役所未収録コードがあります: ${missingCodes.join(', ')}`)
 
-console.log(`static data ok: municipalities=${municipalityMaster.recordCount}, stations=${stationResult.recordCount}/${stationResult.shardCount} shards, government=${offices.length}, medical=${medicalResult.recordCount}/${medicalResult.shardCount} shards`)
+console.log(`static data ok: municipalities=${municipalityMaster.recordCount}, holidays=${holidayEntries.length}/${holidayMaster.coveredThrough}, stations=${stationResult.recordCount}/${stationResult.shardCount} shards, government=${offices.length}, medical=${medicalResult.recordCount}/${medicalResult.shardCount} shards`)

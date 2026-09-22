@@ -30,6 +30,9 @@
   --header-control-border: #cbdde8;
   --surface: rgba(255, 255, 255, 0.93);
   --danger: #ff3429;
+  --holiday: #9d2d28;
+  --holiday-bg: #fff1ef;
+  --holiday-border: #dc8982;
   --shadow: 0 2px 8px rgba(24, 83, 112, 0.1);
 }
 
@@ -246,6 +249,13 @@ a {
   box-shadow: 0 1px 5px rgba(20, 82, 110, 0.06);
 }
 
+.current-date-group {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+}
+
 .current-date,
 .current-clock {
   color: var(--navy);
@@ -264,6 +274,39 @@ a {
 .current-clock .app-icon {
   width: 1.05em;
   height: 1.05em;
+}
+
+.holiday-name,
+.holiday-badge {
+  color: var(--holiday);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.holiday-name {
+  font-size: var(--annotation-font-size);
+}
+
+.holiday-badge {
+  display: none;
+  min-width: 1.65rem;
+  padding: 2px 5px;
+  border: 1px solid var(--holiday-border);
+  border-radius: 999px;
+  background: var(--holiday-bg);
+  font-size: 0.78rem;
+  line-height: 1.2;
+  text-align: center;
+}
+
+@media (max-width: 520px) {
+  .holiday-name {
+    display: none;
+  }
+
+  .holiday-badge {
+    display: inline-block;
+  }
 }
 
 .dashboard {
@@ -1718,7 +1761,13 @@ a {
   }
 
   .date-rail {
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    gap: 6px;
+    padding: 9px 10px;
+  }
+
+  .current-date-group {
+    gap: 4px;
   }
 
   .brand-block h1 {
@@ -1727,8 +1776,19 @@ a {
 
   .current-date,
   .current-clock {
-    font-size: 0.93rem;
-    white-space: normal;
+    font-size: clamp(0.76rem, 4vw, 0.9rem);
+    white-space: nowrap;
+  }
+
+  .current-clock {
+    flex-shrink: 0;
+    gap: 4px;
+  }
+
+  .holiday-badge {
+    min-width: 1.45rem;
+    padding: 1px 4px;
+    font-size: 0.7rem;
   }
 
   .location-facts {
@@ -1800,6 +1860,9 @@ a {
   --update-banner-secondary-bg: #0f3144;
   --update-banner-secondary-fg: #d9f1ff;
   --row-surface: rgba(15, 49, 68, 0.92);
+  --holiday: #ffaaa4;
+  --holiday-bg: rgba(157, 45, 40, 0.2);
+  --holiday-border: #bd655f;
 }
 
 :root[data-color-mode='dark'] .info-card[data-card-id='tide'] {

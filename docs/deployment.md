@@ -6,7 +6,7 @@
 - 本番ブランチ: `main`
 - 修正ブランチ: 作業ごとのfeature／fixブランチからPRを作成
 - 初回公開PR: `#1`（マージ済み）
-- アプリ版: `mvp-0.3.0`
+- アプリ版: `mvp-0.4.0`
 - 本番公開: `https://imacoco.sikumilab.com/`（Cloudflare Pages）
 
 Cloudflare PagesのGitHub連携と独自ドメイン設定は完了済み。今後の修正はPRのCIとPreview確認後に`main`へマージする。
@@ -74,7 +74,27 @@ Cloudflareの[Custom domains](https://developers.cloudflare.com/pages/configurat
 3. 原因修正は新しいPRで行う。
 4. 静的データ不具合なら生成物とmanifestを同じコミット単位で戻す。
 
-## 6. 全国データ更新
+## 6. 祝日データ自動更新
+
+`.github/workflows/update-holidays.yml`を毎月1日12:17 JSTに実行する。手動実行はGitHubの`Actions`→`Update Japanese holidays`→`Run workflow`から行う。
+
+1. 内閣府の公式CSVを取得し、文字コード・ヘッダー・日付・重複・最低件数を検証する。既存生成物より件数や収録期限が後退する、または既存日付が欠落する場合は停止する。
+2. `src/data/japaneseHolidays.generated.json`を再生成する。
+3. 差分がなければ何も作成せず終了する。
+4. 差分があれば`npm run check`を通し、`automation/update-holidays-*`ブランチとPRを自動作成する。
+5. PR内容と収録終了日を確認してマージすると、Cloudflare Pagesが通常どおり本番更新する。
+
+自動PRにはGitHub Actionsの`contents: write`と`pull-requests: write`を使用する。生成・依存導入・検証は`contents: read`だけのジョブで行い、検証済みJSONだけを別の書込ジョブへ渡す。専用PAT、APIキー、独自サーバーは使わない。公式CSV取得や検証に失敗した場合はPRを作らず、公開中の祝日データを維持する。
+
+ローカルでの確認:
+
+```powershell
+npm.cmd run test:holidays
+npm.cmd run data:holidays
+npm.cmd run data:validate
+```
+
+## 7. 全国データ更新
 
 ```powershell
 npm.cmd run data:municipalities
@@ -88,7 +108,7 @@ npm.cmd run test:e2e
 
 生成物だけでなくmanifest、取得元URL、基準日、除外件数、出典表示を同じPRで更新する。件数が大きく減少した場合は公開せず、原典の列変更・配布条件・座標欠損を先に確認する。
 
-## 7. 費用を発生させない境界
+## 8. 費用を発生させない境界
 
 - 独自サーバー、DB、認証、有料地図APIを追加しない。
 - Cloudflare PagesとGitHubの無料範囲を使い、課金プランへの変更は本手順の範囲外とする。

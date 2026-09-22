@@ -4,6 +4,7 @@ import { AppIcon } from './components/AppIcon'
 import { WeatherStateIcon } from './components/WeatherStateIcon'
 import municipalityData from './data/municipalities.generated.json'
 import { formatApproximateDistance } from './domain/geo'
+import { getJapaneseHolidayName, japaneseHolidayDataInfo } from './domain/japaneseHolidays'
 import type { MedicalSummary, NearbyMedicalFacility, StationSummary } from './domain/nearby'
 import type { GovernmentSummary, NearbyOffice } from './domain/government'
 import { runWithOneRetry } from './domain/retry'
@@ -904,6 +905,7 @@ export function App({
 }: AppProps) {
   const now = useLiveNow(initialNow)
   const dateTime = useMemo(() => formatJstDateTime(now), [now])
+  const holidayName = useMemo(() => getJapaneseHolidayName(now), [now])
   const locationProvider = useMemo(
     () => geolocationProvider ?? createGeolocationProvider(),
     [geolocationProvider]
@@ -1617,8 +1619,19 @@ export function App({
         </div>
       )}
 
-      <div className="date-rail" aria-label="現在の日本時間">
-        <time className="current-date" dateTime={now.toISOString()}>{dateTime.dateLabel}</time>
+      <div
+        className="date-rail"
+        aria-label={holidayName ? `現在の日本時間、祝日：${holidayName}` : '現在の日本時間'}
+      >
+        <div className="current-date-group">
+          <time className="current-date" dateTime={now.toISOString()}>{dateTime.dateLabel}</time>
+          {holidayName && (
+            <>
+              <span className="holiday-name">{holidayName}</span>
+              <span className="holiday-badge" title={holidayName} aria-label={`祝日：${holidayName}`}>祝</span>
+            </>
+          )}
+        </div>
         <time className="current-clock" dateTime={now.toISOString()}>
           <AppIcon name="clock" /> {dateTime.timeLabel}
         </time>
@@ -1688,6 +1701,7 @@ export function App({
                 <h2 id="info-panel-title">出典・プライバシー</h2>
                 <p>位置情報や表示内容を本アプリのサーバーへ保存せず、アカウント登録・位置履歴の蓄積・アクセス解析は行いません。外部APIには下記の丸めた座標だけを送信します。</p>
                 <dl className="source-list">
+                  <div><dt>日本の祝日</dt><dd><a href={japaneseHolidayDataInfo.sourceUrl} target="_blank" rel="noreferrer">{japaneseHolidayDataInfo.sourceName}</a>（{japaneseHolidayDataInfo.coveredThrough}まで）を端末内で参照</dd></div>
                   <div><dt>地名・行政区域</dt><dd><a href="https://maps.gsi.go.jp/" target="_blank" rel="noreferrer">国土地理院</a>へ小数4桁に丸めた座標を送信</dd></div>
                   <div><dt>天気・太陽・概算標高</dt><dd><a href="https://open-meteo.com/en/docs" target="_blank" rel="noreferrer">Open-Meteo</a>へ小数2桁に丸めた座標を送信</dd></div>
                   <div><dt>潮の目安</dt><dd><a href="https://open-meteo.com/en/docs/marine-weather-api" target="_blank" rel="noreferrer">Open-Meteo Marine</a>へ小数2桁に丸めた座標を送信し、海面モデルから概算（実測の潮汐表ではありません）</dd></div>
