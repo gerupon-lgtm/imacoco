@@ -531,7 +531,8 @@ test('正式アイコンと控えめな文字サイズで現在地への地図�
 
   const brandIcon = page.locator('.brand-icon')
   await expect(brandIcon).toHaveAttribute('src', /favicon\.svg$/)
-  await expect(page.getByText('imacoco-info', { exact: true })).toBeVisible()
+  await expect(page.locator('.brand-slug-accessible')).toHaveText('imacoco-info')
+  await expect(page.locator('.brand-slug-visual')).toBeVisible()
   await expect(page.getByText('表示距離はすべて現在地からの直線距離です', { exact: true })).toHaveCount(1)
   await expect(page.getByText('地図', { exact: true })).toHaveCount(4)
   await expect(page.getByText('地図で開く', { exact: true })).toHaveCount(0)
@@ -593,7 +594,8 @@ test('正式アイコンと控えめな文字サイズで現在地への地図�
       themeControlWidthDifference: Math.abs(headerActions.width - themePicker.width),
       themeControlGap: themePicker.top - headerActions.bottom,
       headerControlBorders,
-      slugLetterSpacing: Number.parseFloat(getComputedStyle(document.querySelector('.brand-slug')!).letterSpacing),
+      slugDisplay: getComputedStyle(document.querySelector('.brand-slug-visual')!).display,
+      slugJustifyContent: getComputedStyle(document.querySelector('.brand-slug-visual')!).justifyContent,
       titleFontSize: fontSize('.brand-block h1'),
       titleHeight: title.height,
       titleLineHeight: Number.parseFloat(titleStyle.lineHeight),
@@ -629,7 +631,8 @@ test('正式アイコンと控えめな文字サイズで現在地への地図�
 
   expect(metrics.headerTopDifference).toBeLessThanOrEqual(1)
   expect(metrics.headerButtonHeight).toBeLessThanOrEqual(44)
-  expect(metrics.slugLetterSpacing).toBeGreaterThanOrEqual(2.6)
+  expect(metrics.slugDisplay).toBe('flex')
+  expect(metrics.slugJustifyContent).toBe('space-between')
   expect(metrics.titleFontSize).toBeLessThanOrEqual(24)
   expect(metrics.titleFontSize).toBeGreaterThanOrEqual(20)
   expect(metrics.themeControlWidthDifference).toBeLessThanOrEqual(1)
@@ -668,6 +671,23 @@ test('正式アイコンと控えめな文字サイズで現在地への地図�
   expect(metrics.shellBackground).toContain('rgb(226, 238, 241)')
   expect(metrics.fontSynthesis).toBe('none')
   await page.screenshot({ path: 'test-results/dashboard-mobile-refined-light.png', fullPage: true })
+})
+
+test('ヘッダーの英字表記を日本語タイトルと同程度の幅に揃える', async ({ page }) => {
+  for (const width of [320, 380, 381, 390, 620, 621, 680, 740, 900]) {
+    await page.setViewportSize({ width, height: 300 })
+    await page.goto('/?preview=1')
+    const widths = await page.evaluate(() => {
+      const title = document.querySelector<HTMLElement>('.brand-block h1')!
+      const slug = document.querySelector<HTMLElement>('.brand-slug')!
+      return {
+        title: title.getBoundingClientRect().width,
+        slug: slug.getBoundingClientRect().width
+      }
+    })
+
+    expect(Math.abs(widths.title - widths.slug), JSON.stringify({ width, ...widths })).toBeLessThanOrEqual(1)
+  }
 })
 
 test('住所ピンをPCとスマホの両方で住所側に寄せる', async ({ page }) => {
@@ -880,7 +900,7 @@ test('測位できない再訪時は24時間以内の前回位置を明示して
   await expect(page.getByText('前回の位置', { exact: true })).toBeVisible()
   const footerStatus = page.locator('.footer-meta')
   await expect(footerStatus.getByText('一部に15分以内の保存済み情報を表示しています', { exact: true })).toHaveCount(1)
-  await expect(footerStatus).toContainText('mvp-0.4.0')
+  await expect(footerStatus).toContainText('mvp-0.4.1')
   await expect(page.getByText('現在地を取得できないため、24時間以内の前回位置を表示しています')).toBeVisible()
 })
 
@@ -1041,5 +1061,5 @@ test('天気の気温補足値を一列に揃え、MVP版を表示する', async
     Math.max(...temperatureValueTops) - Math.min(...temperatureValueTops),
     `weather temperature value tops: ${JSON.stringify(temperatureValueTops)}`
   ).toBeLessThanOrEqual(1)
-  await expect.soft(page.locator('.app-footer')).toContainText('mvp-0.4.0')
+  await expect.soft(page.locator('.app-footer')).toContainText('mvp-0.4.1')
 })

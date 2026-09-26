@@ -77,6 +77,8 @@ a {
 }
 
 .brand-copy {
+  display: grid;
+  width: max-content;
   min-width: 0;
 }
 
@@ -102,10 +104,29 @@ a {
 }
 
 .brand-slug {
+  position: relative;
   margin: 5px 0 0;
   color: var(--interactive-link);
   font-size: 0.76rem;
-  letter-spacing: 0.24em;
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+
+.brand-slug-visual {
+  display: flex;
+  justify-content: space-between;
+}
+
+.brand-slug-accessible {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .copyright {

@@ -1565,7 +1565,14 @@ export function App({
           <img className="brand-icon" src="/favicon.svg" alt="" />
           <div className="brand-copy">
             <h1>いまここインフォ</h1>
-            <p className="brand-slug">imacoco-info</p>
+            <p className="brand-slug">
+              <span className="brand-slug-accessible">imacoco-info</span>
+              <span className="brand-slug-visual" aria-hidden="true">
+                {'imacoco-info'.split('').map((character, index) => (
+                  <span key={`${character}-${index}`}>{character}</span>
+                ))}
+              </span>
+            </p>
             <p className="copyright">© 2026 SIKUMI LAB</p>
           </div>
         </div>
